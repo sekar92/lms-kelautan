@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" fill="none">
+  <defs>
+    <linearGradient id="waveGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1E3A8A" />
+      <stop offset="50%" stop-color="#0284C7" />
+      <stop offset="100%" stop-color="#06B6D4" />
+    </linearGradient>
+    <linearGradient id="crestGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22D3EE" />
+      <stop offset="100%" stop-color="#0EA5E9" />
+    </linearGradient>
+  </defs>
+  <!-- Maritime Wave Icon -->
+  <g transform="translate(6, 6)">
+    <circle cx="24" cy="24" r="24" fill="#0A192F" />
+    <path d="M10 32C14 26 19 23 24 28C29 33 34 30 38 24C35 34 26 38 18 36C14 35 12 33 10 32Z" fill="url(#waveGrad)" />
+    <path d="M12 26C16 20 21 17 26 22C30 26 34 24 37 18C35 28 27 31 20 30C16 29 14 27 12 26Z" fill="url(#crestGrad)" opacity="0.85" />
+    <circle cx="29" cy="15" r="2.5" fill="#38BDF8" />
+  </g>
+  <!-- Brand Typography -->
+  <text x="64" y="32" font-family="'Outfit', sans-serif" font-weight="800" font-size="22" fill="#FFFFFF" letter-spacing="-0.5">
+    KELAUTAN<tspan fill="#38BDF8">.ID</tspan>
+  </text>
+  <text x="64" y="47" font-family="'Plus Jakarta Sans', sans-serif" font-weight="600" font-size="8.5" fill="#94A3B8" letter-spacing="1.8">
+    PORTAL MARITIM INDONESIA
+  </text>
+</svg>

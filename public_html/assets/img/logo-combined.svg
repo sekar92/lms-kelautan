@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 60" fill="none">
+  <!-- Polikant Emblem -->
+  <g transform="translate(4, 5)">
+    <circle cx="25" cy="25" r="23" fill="#0A192F" stroke="#F59E0B" stroke-width="2" />
+    <path d="M25 12V34M17 24C17 32 33 32 33 24M20 37H30M22 15H28" stroke="#FBBF24" stroke-width="2" stroke-linecap="round"/>
+    <path d="M19 29C21 31 23 32 25 32C27 32 29 31 31 29" stroke="#38BDF8" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+  <!-- Divider -->
+  <line x1="62" y1="12" x2="62" y2="48" stroke="#334155" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Kelautan.ID Waves & Text -->
+  <g transform="translate(74, 5)">
+    <circle cx="25" cy="25" r="23" fill="#0A192F" />
+    <path d="M12 32C16 26 21 23 26 28C30 32 34 30 38 24C35 34 27 37 19 35C16 34 14 33 12 32Z" fill="#0284C7" />
+    <path d="M14 26C18 20 22 17 27 22C31 26 35 24 37 18C35 27 28 30 21 29C18 28 16 27 14 26Z" fill="#38BDF8" opacity="0.9" />
+  </g>
+  <text x="132" y="29" font-family="'Outfit', sans-serif" font-weight="800" font-size="18" fill="#FFFFFF" letter-spacing="-0.3">
+    LMS POLIKANT
+  </text>
+  <text x="132" y="45" font-family="'Plus Jakarta Sans', sans-serif" font-weight="600" font-size="9" fill="#38BDF8" letter-spacing="1">
+    POWERED BY KELAUTAN.ID
+  </text>
+</svg>

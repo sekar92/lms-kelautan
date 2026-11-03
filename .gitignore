@@ -1,0 +1,37 @@
+# Environment & Secrets (Sangat Rahasia - Password DB VPS)
+config/env.php
+
+# Local Database (SQLite lokal tidak di-push ke git agar data production tidak tertimpa)
+storage/db_lms_kelautan.sqlite
+storage/*.sqlite
+*.sqlite
+*.db
+
+# Uploaded Files / Student Submissions / Local Uploads
+# Berkas fisik tugas & materi lokal tidak perlu di-push ke git repository
+storage/01_Materi_Perkuliahan/*
+!storage/01_Materi_Perkuliahan/.gitkeep
+storage/02_RPS_dan_Silabus/*
+!storage/02_RPS_dan_Silabus/.gitkeep
+storage/03_Pengumpulan_Tugas/*
+!storage/03_Pengumpulan_Tugas/.gitkeep
+public_html/assets/uploads/avatars/*
+!public_html/assets/uploads/avatars/.gitkeep
+public_html/assets/uploads/branding/*
+!public_html/assets/uploads/branding/.gitkeep
+
+# OS generated files & caches
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.log
+
+# Editor / IDE settings
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace

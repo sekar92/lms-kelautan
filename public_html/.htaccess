@@ -1,0 +1,78 @@
+# LMS POLIKANT × KELAUTAN.ID
+# Apache2 Configuration & Security Rules
+
+# Hindari directory indexing
+Options -Indexes +FollowSymLinks
+
+# Lindungi file tersembunyi
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# Izinkan penanaman iframe di domain Kelautan.ID dan Polikant
+<IfModule mod_headers.c>
+    Header always unset X-Frame-Options
+    Header always set Content-Security-Policy "frame-ancestors 'self' https://kelautan.id https://*.kelautan.id https://*.polikant.ac.id http://localhost:*;"
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Caching aset statis (CSS, JS, SVG, Images)
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+</IfModule>
+
+# Konfigurasi Upload File PHP untuk Apache mod_php
+<IfModule mod_php.c>
+    php_value upload_max_filesize 60M
+    php_value post_max_size 70M
+    php_value memory_limit 256M
+    php_value max_execution_time 120
+</IfModule>
+<IfModule mod_php8.c>
+    php_value upload_max_filesize 60M
+    php_value post_max_size 70M
+    php_value memory_limit 256M
+    php_value max_execution_time 120
+</IfModule>
+
+# URL Rewriting & Clean Aesthetic URLs
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # 1. Custom Pretty Route: /kelas/{id_mk}/{tab}
+    RewriteRule ^kelas/([a-zA-Z0-9_\-]+)/([a-zA-Z0-9_\-]+)/?$ ruang-kelas.php?id=$1&tab=$2 [L,QSA]
+
+    # 2. Custom Pretty Route: /kelas/{id_mk}
+    RewriteRule ^kelas/([a-zA-Z0-9_\-]+)/?$ ruang-kelas.php?id=$1 [L,QSA]
+
+    # 3. Custom Pretty Route: /nilai/{id_konten}
+    RewriteRule ^nilai/([a-zA-Z0-9_\-]+)/?$ tugas-nilai.php?id_konten=$1 [L,QSA]
+
+    # 4. Redirect browser dari URL .php lama ke URL cantik tanpa .php (khusus GET)
+    RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+ruang-kelas\.php\?id=([a-zA-Z0-9_\-]+)&tab=([a-zA-Z0-9_\-]+) [NC]
+    RewriteRule ^ruang-kelas\.php$ /kelas/%1/%2? [R=301,L,NE]
+
+    RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+ruang-kelas\.php\?id=([a-zA-Z0-9_\-]+) [NC]
+    RewriteRule ^ruang-kelas\.php$ /kelas/%1? [R=301,L,NE]
+
+    RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+tugas-nilai\.php\?id_konten=([a-zA-Z0-9_\-]+) [NC]
+    RewriteRule ^tugas-nilai\.php$ /nilai/%1? [R=301,L,NE]
+
+    # Jangan redirect berkas unduh.php atau request method POST
+    RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+(.+)\.php[\s?] [NC]
+    RewriteCond %{REQUEST_METHOD} !POST
+    RewriteCond %{REQUEST_URI} !^/unduh\.php [NC]
+    RewriteRule ^(.+)\.php$ /$1 [R=301,L,NE]
+
+    # 5. Resolusi file .php jika request tanpa ekstensi .php
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME}.php -f
+    RewriteRule ^([^\.]+)$ $1.php [NC,L,QSA]
+</IfModule>
+
+

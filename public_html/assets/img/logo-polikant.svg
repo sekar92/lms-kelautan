@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" fill="none">
+  <defs>
+    <linearGradient id="polikantGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284C7" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+  </defs>
+  <!-- Outer Ring & Shield -->
+  <circle cx="30" cy="30" r="28" fill="url(#polikantGrad)" stroke="#F59E0B" stroke-width="2.5" />
+  <circle cx="30" cy="30" r="23" fill="none" stroke="#38BDF8" stroke-dasharray="2,2" stroke-width="1" />
+  <!-- Maritime Anchor & Torch Symbolism -->
+  <path d="M30 14V39M20 28C20 37 40 37 40 28M24 42H36M26 18H34" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Fish / Waves at base -->
+  <path d="M22 34C24 37 28 38 30 38C32 38 36 37 38 34" stroke="#38BDF8" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="30" cy="18" r="2.5" fill="#FFFFFF"/>
+</svg>
