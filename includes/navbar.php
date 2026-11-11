@@ -198,6 +198,17 @@ function nav_active(string $target, string $current): string {
                         <span>Dashboard</span>
                     </a>
 
+                    <?php if (is_dosen()): ?>
+                        <a href="/bank-soal" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs <?= nav_active('bank-soal', $currentScript) ?>">
+                            <i data-lucide="help-circle" class="w-4 h-4 shrink-0 text-cyan-400"></i>
+                            <span>Bank Soal</span>
+                        </a>
+                        <a href="/rekap-nilai" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs <?= nav_active('rekap-nilai', $currentScript) ?>">
+                            <i data-lucide="award" class="w-4 h-4 shrink-0 text-cyan-400"></i>
+                            <span>Rekap Nilai</span>
+                        </a>
+                    <?php endif; ?>
+
                     <?php if (is_dosen_admin()): ?>
                         <a href="/tahun-akademik" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs <?= nav_active('tahun-akademik', $currentScript) ?>">
                             <i data-lucide="calendar-range" class="w-4 h-4 shrink-0 text-cyan-400"></i>
@@ -321,6 +332,16 @@ function nav_active(string $target, string $current): string {
                         <i data-lucide="layout-dashboard" class="w-4 h-4 text-cyan-400"></i>
                         <span>Dashboard</span>
                     </a>
+                    <?php if (is_dosen()): ?>
+                        <a href="/bank-soal" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs <?= nav_active('bank-soal', $currentScript) ?>">
+                            <i data-lucide="help-circle" class="w-4 h-4 text-cyan-400"></i>
+                            <span>Bank Soal</span>
+                        </a>
+                        <a href="/rekap-nilai" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs <?= nav_active('rekap-nilai', $currentScript) ?>">
+                            <i data-lucide="award" class="w-4 h-4 text-cyan-400"></i>
+                            <span>Rekap Nilai</span>
+                        </a>
+                    <?php endif; ?>
                     <?php if (is_dosen_admin()): ?>
                         <a href="/tahun-akademik" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs <?= nav_active('tahun-akademik', $currentScript) ?>">
                             <i data-lucide="calendar-range" class="w-4 h-4 text-cyan-400"></i>

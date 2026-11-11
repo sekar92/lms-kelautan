@@ -53,6 +53,11 @@ Options -Indexes +FollowSymLinks
     # 3. Custom Pretty Route: /nilai/{id_konten}
     RewriteRule ^nilai/([a-zA-Z0-9_\-]+)/?$ tugas-nilai.php?id_konten=$1 [L,QSA]
 
+    # 3b. Custom Pretty Routes untuk Kuis & Ujian (v3.6)
+    RewriteRule ^kuis/kelola/([a-zA-Z0-9_\-]+)/?$ kuis-kelola.php?id_konten=$1 [L,QSA]
+    RewriteRule ^kuis/kerjakan/([a-zA-Z0-9_\-]+)/?$ kuis-kerjakan.php?id_konten=$1 [L,QSA]
+    RewriteRule ^kuis/nilai/([a-zA-Z0-9_\-]+)/?$ kuis-nilai.php?id_konten=$1 [L,QSA]
+
     # 4. Redirect browser dari URL .php lama ke URL cantik tanpa .php (khusus GET)
     RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+ruang-kelas\.php\?id=([a-zA-Z0-9_\-]+)&tab=([a-zA-Z0-9_\-]+) [NC]
     RewriteRule ^ruang-kelas\.php$ /kelas/%1/%2? [R=301,L,NE]
@@ -62,6 +67,15 @@ Options -Indexes +FollowSymLinks
 
     RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+tugas-nilai\.php\?id_konten=([a-zA-Z0-9_\-]+) [NC]
     RewriteRule ^tugas-nilai\.php$ /nilai/%1? [R=301,L,NE]
+
+    RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+kuis-kelola\.php\?id_konten=([a-zA-Z0-9_\-]+) [NC]
+    RewriteRule ^kuis-kelola\.php$ /kuis/kelola/%1? [R=301,L,NE]
+
+    RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+kuis-kerjakan\.php\?id_konten=([a-zA-Z0-9_\-]+) [NC]
+    RewriteRule ^kuis-kerjakan\.php$ /kuis/kerjakan/%1? [R=301,L,NE]
+
+    RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+kuis-nilai\.php\?id_konten=([a-zA-Z0-9_\-]+) [NC]
+    RewriteRule ^kuis-nilai\.php$ /kuis/nilai/%1? [R=301,L,NE]
 
     # Jangan redirect berkas unduh.php atau request method POST
     RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+(.+)\.php[\s?] [NC]

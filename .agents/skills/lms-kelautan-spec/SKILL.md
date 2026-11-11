@@ -220,12 +220,21 @@ Khusus pada dashboard mahasiswa untuk memastikan tidak ada tugas atau kuis yang 
   * **Manajemen Lampiran Berkas**: Menampilkan nama berkas lampiran yang ada, opsi ganti berkas baru (berkas lama dibersihkan dari server), atau opsi hapus berkas lampiran.
   * Dilengkapi animasi proses penyimpanan dan pencatatan audit trail ke `log_aktivitas` (`TAMBAH_KONTEN`, `UPDATE_KONTEN`, `HAPUS_KONTEN`).
 
-### 5.5 Pusat Simulasi Akun / Login-As (`/login-as`)
+### 5.5 Rekapitulasi Nilai Perkuliahan & Ekspor CSV/Excel (`/rekap-nilai` & `/kelas/{id}/rekap`)
+* **Akses & Otorisasi**: Khusus Dosen Pengampu dan Dosen Admin.
+* **Fitur & Kapabilitas**:
+  * Pusat rekap nilai seluruh mata kuliah yang diampu (`/rekap-nilai`).
+  * Tab matriks 16 minggu pada ruang kelas (`/kelas/{kode_mk}/rekap`) yang memetakan seluruh mahasiswa terhadap setiap pertemuan yang memiliki tugas.
+  * Menghitung nilai rata-rata per mahasiswa dan rata-rata kelas otomatis.
+  * Dua opsi unduh berkas: **Ekspor Seluruh Nilai Semester** atau **Ekspor Khusus Per Pertemuan Tugas**.
+  * Dilengkapi **UTF-8 BOM** (*Byte Order Mark*) untuk kompatibilitas penuh dengan Microsoft Excel.
+
+### 5.6 Pusat Simulasi Akun / Login-As (`/login-as`)
 * **Otorisasi**: Khusus Dosen Admin (`require_dosen_admin()`).
 * **Isolasi Snapshot**: Sesi admin asli diarsipkan di `$_SESSION['impersonator']` dengan seluruh hak akses beralih penuh ke identitas target.
 * **Auto-Heal Safeguard**: Jika `user_id` aktif sama dengan `impersonator['user_id']`, sistem otomatis menghapus `$_SESSION['impersonator']` untuk mencegah admin terperangkap dalam status simulasi.
 
-### 5.5 Log Aktivitas & Audit Trail Sistem (`/log-aktivitas`)
+### 5.7 Log Aktivitas & Audit Trail Sistem (`/log-aktivitas`)
 * **Tabel Database**: `log_aktivitas` (SQLite & MariaDB/MySQL auto-migration).
 * **Data Tercatat**:
   * `id_user`, `username`, `nama`, `role`
@@ -237,13 +246,33 @@ Khusus pada dashboard mahasiswa untuk memastikan tidak ada tugas atau kuis yang 
   * `created_at` (timestamp presisi detik)
 * **Ekspor CSV**: Menyediakan fitur ekspor data terfilter langsung ke file `.csv` dengan header UTF-8 BOM untuk kompatibilitas sempurna dengan Microsoft Excel.
 
-### 5.6 Panel Pengaturan Sistem (`/pengaturan`)
+### 5.8 Panel Pengaturan Sistem (`/pengaturan`)
 * Mengontrol konfigurasi dinamis platform tanpa perlu mengubah kode sumber:
   * Nama Platform, Nama Aplikasi LMS, Tagline, dan Deskripsi Footer.
   * Nama Program Studi dan Nama Institusi.
   * Upload Logo Kustom & Favicon Kustom.
   * Batas Maksimal Upload Materi (MB) dan Upload Tugas (MB).
   * Tautan Ekosistem (Portal, Journal, Pemendek Link) & Kontak Bantuan.
+
+### 5.9 Bank Soal & Sistem Kuis Interaktif (`/bank-soal`, `/kuis/kelola`, `/kuis/kerjakan`, `/kuis/nilai`)
+* **Bank Soal Perkuliahan (`/bank-soal`)**:
+  * Repositori terpusat bagi Dosen untuk membuat dan menyimpan butir pertanyaan.
+  * Mendukung 4 tipe butir soal:
+    1. **Pilihan Ganda (PG)**: Opsi A s/d E dengan penentuan radio kunci jawaban benar.
+    2. **Benar / Salah (True / False)**: Pernyataan evaluasi dengan kunci status Benar atau Salah.
+    3. **Isian Singkat (Short Answer)**: Pertanyaan dengan kunci teks (toleransi huruf besar/kecil & alternatif koma).
+    4. **Essay / Uraian**: Pertanyaan studi kasus dengan rubrik penilaian dosen.
+* **Kelola Paket Kuis Mingguan (`/kuis/kelola/{id_konten}`)**:
+  * Dosen merangkai butir soal dari Bank Soal ke dalam Kuis/Ujian pada minggu perkuliahan tertentu.
+  * Pengaturan bobot nilai per butir dan nomor urut pengerjaan.
+* **Pengerjaan Kuis Mahasiswa (`/kuis/kerjakan/{id_konten}`)**:
+  * *Sticky Countdown Timer* (berbasis server timestamp, aman dari manipulasi jam lokal).
+  * Auto-submit otomatis ketika durasi waktu habis.
+  * Navigator nomor soal interaktif.
+* **Mesin Auto-Grading & Penilaian Essay Dosen (`/kuis/nilai/{id_konten}`)**:
+  * Auto-grading instan untuk soal PG, B/S, dan Isian Singkat.
+  * Lembar koreksi essay khusus bagi Dosen untuk memberikan nilai butir dan catatan feedback.
+  * Sinkronisasi otomatis ke transkrip **Rekap Nilai Perkuliahan** dan ekspor CSV/Excel.
 
 ---
 

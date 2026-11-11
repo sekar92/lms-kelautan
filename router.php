@@ -45,6 +45,25 @@ if (preg_match('#^/nilai/([^/]+)/?$#', $uri, $matches)) {
     exit;
 }
 
+// 5b. Routing Cantik Kuis: Kelola, Kerjakan, Nilai
+if (preg_match('#^/kuis/kelola/([^/]+)/?$#', $uri, $matches)) {
+    $_GET['id_konten'] = $matches[1];
+    require $publicDir . '/kuis-kelola.php';
+    exit;
+}
+
+if (preg_match('#^/kuis/kerjakan/([^/]+)/?$#', $uri, $matches)) {
+    $_GET['id_konten'] = $matches[1];
+    require $publicDir . '/kuis-kerjakan.php';
+    exit;
+}
+
+if (preg_match('#^/kuis/nilai/([^/]+)/?$#', $uri, $matches)) {
+    $_GET['id_konten'] = $matches[1];
+    require $publicDir . '/kuis-nilai.php';
+    exit;
+}
+
 // 6. Clean URL tanpa ekstensi .php (misal: /dashboard -> public_html/dashboard.php)
 $cleanPath = trim($uri, '/');
 $targetPhp = $publicDir . '/' . $cleanPath . '.php';

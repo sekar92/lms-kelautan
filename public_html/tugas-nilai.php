@@ -146,6 +146,13 @@ require_once __DIR__ . '/../includes/navbar.php';
 
             <!-- Pratinjau Soal & Aksi Cepat -->
             <div class="shrink-0 flex items-center space-x-2">
+                <!-- Tombol Ekspor Nilai Tugas Ini -->
+                <a href="/kelas/<?= urlencode(!empty($task['kode_mk']) ? $task['kode_mk'] : $task['id_mk']) ?>/rekap?export=csv&task_id=<?= urlencode($idKonten) ?>" 
+                   class="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow transition">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    <span>Ekspor Nilai (CSV)</span>
+                </a>
+
                 <?php if (!empty($task['file_path'])): ?>
                     <button type="button" 
                             onclick="openPdfModal('/unduh.php?jenis=materi&id_konten=<?= urlencode($idKonten) ?>&mode=inline', 'Soal Tugas - <?= htmlspecialchars(addslashes($task['judul'])) ?>')"

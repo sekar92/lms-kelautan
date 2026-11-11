@@ -337,6 +337,139 @@ if ($testKonten) {
     $db->prepare("UPDATE konten_mingguan SET judul = ? WHERE id_konten = ?")->execute([$testKonten['judul'], $testKonten['id_konten']]);
 }
 
+// 15. Pengujian Fitur Rekap Nilai Tugas & Ekspor CSV (v3.5)
+assert_test("v3.5: Berkas public_html/rekap-nilai.php tersedia", file_exists(__DIR__ . '/../public_html/rekap-nilai.php'));
+
+$testCourse = $db->query("SELECT id_mk, kode_mk FROM mata_kuliah LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+if ($testCourse) {
+    // Pastikan query rekapitulasi nilai tugas berfungsi tanpa error SQL
+    $stmtRekapTasks = $db->prepare("SELECT id_konten, minggu_ke, judul FROM konten_mingguan WHERE id_mk = ? AND tipe = 'Tugas'");
+    $stmtRekapTasks->execute([$testCourse['id_mk']]);
+    $tasksList = $stmtRekapTasks->fetchAll(PDO::FETCH_ASSOC);
+
+    $stmtRekapMhs = $db->prepare("
+        SELECT u.id_user, u.username, u.nama, pt.nilai
+        FROM enrollment e
+        JOIN users u ON e.id_user = u.id_user
+        LEFT JOIN pengumpulan_tugas pt ON pt.id_user = u.id_user
+        WHERE e.id_mk = ?
+    ");
+    $stmtRekapMhs->execute([$testCourse['id_mk']]);
+    $mhsMatrix = $stmtRekapMhs->fetchAll(PDO::FETCH_ASSOC);
+
+    assert_test("v3.5: Query matriks rekapitulasi nilai kelas berhasil dijalankan", is_array($mhsMatrix));
+}
+
+// 16. Pengujian Bank Soal & Sistem Kuis Interaktif (v3.6)
+require_once __DIR__ . '/../includes/quiz_helper.php';
+
+assert_test("v3.6: Berkas public_html/bank-soal.php tersedia", file_exists(__DIR__ . '/../public_html/bank-soal.php'));
+assert_test("v3.6: Berkas public_html/kuis-kelola.php tersedia", file_exists(__DIR__ . '/../public_html/kuis-kelola.php'));
+assert_test("v3.6: Berkas public_html/kuis-kerjakan.php tersedia", file_exists(__DIR__ . '/../public_html/kuis-kerjakan.php'));
+assert_test("v3.6: Berkas public_html/kuis-nilai.php tersedia", file_exists(__DIR__ . '/../public_html/kuis-nilai.php'));
+
+// Uji Pembuatan Butir Soal 4 Tipe (PG, Benar/Salah, Isian, Essay)
+$testIdMK = $testCourse['id_mk'] ?? 'MK-00001';
+
+// 1. Soal Pilihan Ganda (PG)
+$idSoalPG = generate_id('SOL', 'bank_soal', 'id_soal');
+$stmtInPG = $db->prepare("
+    INSERT INTO bank_soal (id_soal, id_mk, id_dosen, tipe_soal, pertanyaan, bobot_default, created_at)
+    VALUES (?, ?, 'USR-00001', 'pg', 'Alat oseanografi yang digunakan untuk mengukur salinitas, suhu, dan kedalaman air laut adalah?', 25.0, CURRENT_TIMESTAMP)
+");
+$stmtInPG->execute([$idSoalPG, $testIdMK]);
+
+$idOpsA = generate_id('OPS', 'bank_soal_opsi', 'id_opsi');
+$db->prepare("INSERT INTO bank_soal_opsi (id_opsi, id_soal, label_opsi, teks_opsi, is_benar, urutan) VALUES (?, ?, 'A', 'CTD Profiler', 1, 1)")->execute([$idOpsA, $idSoalPG]);
+$idOpsB = generate_id('OPS', 'bank_soal_opsi', 'id_opsi');
+$db->prepare("INSERT INTO bank_soal_opsi (id_opsi, id_soal, label_opsi, teks_opsi, is_benar, urutan) VALUES (?, ?, 'B', 'Secchi Disk', 0, 2)")->execute([$idOpsB, $idSoalPG]);
+
+// 2. Soal Benar / Salah
+$idSoalBS = generate_id('SOL', 'bank_soal', 'id_soal');
+$db->prepare("
+    INSERT INTO bank_soal (id_soal, id_mk, id_dosen, tipe_soal, pertanyaan, bobot_default, created_at)
+    VALUES (?, ?, 'USR-00001', 'benar_salah', 'Palung Mariana merupakan titik terdalam di samudera bumi.', 25.0, CURRENT_TIMESTAMP)
+")->execute([$idSoalBS, $testIdMK]);
+$idOpsBS1 = generate_id('OPS', 'bank_soal_opsi', 'id_opsi');
+$db->prepare("INSERT INTO bank_soal_opsi (id_opsi, id_soal, label_opsi, teks_opsi, is_benar, urutan) VALUES (?, ?, 'Benar', 'Pernyataan ini Benar', 1, 1)")->execute([$idOpsBS1, $idSoalBS]);
+$idOpsBS2 = generate_id('OPS', 'bank_soal_opsi', 'id_opsi');
+$db->prepare("INSERT INTO bank_soal_opsi (id_opsi, id_soal, label_opsi, teks_opsi, is_benar, urutan) VALUES (?, ?, 'Salah', 'Pernyataan ini Salah', 0, 2)")->execute([$idOpsBS2, $idSoalBS]);
+
+// 3. Soal Isian Singkat
+$idSoalIsian = generate_id('SOL', 'bank_soal', 'id_soal');
+$db->prepare("
+    INSERT INTO bank_soal (id_soal, id_mk, id_dosen, tipe_soal, pertanyaan, kunci_jawaban_teks, bobot_default, created_at)
+    VALUES (?, ?, 'USR-00001', 'isian', 'Fenomena aliran massa air dari Samudera Pasifik menuju Hindia melalui selat di Indonesia disingkat sebagai?', 'Arlindo, Arus Lintas Indonesia', 25.0, CURRENT_TIMESTAMP)
+")->execute([$idSoalIsian, $testIdMK]);
+
+// 4. Soal Essay
+$idSoalEssay = generate_id('SOL', 'bank_soal', 'id_soal');
+$db->prepare("
+    INSERT INTO bank_soal (id_soal, id_mk, id_dosen, tipe_soal, pertanyaan, kunci_jawaban_teks, bobot_default, created_at)
+    VALUES (?, ?, 'USR-00001', 'essay', 'Jelaskan pengaruh pergerakan lempeng tektonik terhadap pembentukan morfologi dasar laut di kepulauan Maluku!', 'Penjelasan lempeng Pasifik, Indo-Australia, subduksi dan busur vulkanik', 25.0, CURRENT_TIMESTAMP)
+")->execute([$idSoalEssay, $testIdMK]);
+
+assert_test("v3.6: Pembuatan 4 tipe butir soal (PG, B/S, Isian, Essay) di Bank Soal berhasil", 
+    !empty($idSoalPG) && !empty($idSoalBS) && !empty($idSoalIsian) && !empty($idSoalEssay)
+);
+
+// Uji Pembuatan Komponen Kuis & Perangkaian Soal
+$idKontenKuis = generate_id('KNT', 'konten_mingguan', 'id_konten');
+$db->prepare("
+    INSERT INTO konten_mingguan (id_konten, id_mk, minggu_ke, tipe, judul, durasi_menit, created_at)
+    VALUES (?, ?, 4, 'Kuis', 'Kuis Oseanografi Dasar & Morfologi Laut', 30, CURRENT_TIMESTAMP)
+")->execute([$idKontenKuis, $testIdMK]);
+
+// Rangkai 4 soal ke dalam kuis
+$idKS1 = generate_id('KS', 'kuis_soal', 'id_kuis_soal');
+$db->prepare("INSERT INTO kuis_soal (id_kuis_soal, id_konten, id_soal, urutan, bobot_nilai) VALUES (?, ?, ?, 1, 25.0)")->execute([$idKS1, $idKontenKuis, $idSoalPG]);
+$idKS2 = generate_id('KS', 'kuis_soal', 'id_kuis_soal');
+$db->prepare("INSERT INTO kuis_soal (id_kuis_soal, id_konten, id_soal, urutan, bobot_nilai) VALUES (?, ?, ?, 2, 25.0)")->execute([$idKS2, $idKontenKuis, $idSoalBS]);
+$idKS3 = generate_id('KS', 'kuis_soal', 'id_kuis_soal');
+$db->prepare("INSERT INTO kuis_soal (id_kuis_soal, id_konten, id_soal, urutan, bobot_nilai) VALUES (?, ?, ?, 3, 25.0)")->execute([$idKS3, $idKontenKuis, $idSoalIsian]);
+$idKS4 = generate_id('KS', 'kuis_soal', 'id_kuis_soal');
+$db->prepare("INSERT INTO kuis_soal (id_kuis_soal, id_konten, id_soal, urutan, bobot_nilai) VALUES (?, ?, ?, 4, 25.0)")->execute([$idKS4, $idKontenKuis, $idSoalEssay]);
+
+$countTerpasang = $db->query("SELECT COUNT(*) FROM kuis_soal WHERE id_konten = '{$idKontenKuis}'")->fetchColumn();
+assert_test("v3.6: Perangkaian 4 soal dari Bank Soal ke Kuis Mingguan berhasil", (int)$countTerpasang === 4);
+
+// Uji Simulasi Pengerjaan Kuis oleh Mahasiswa (USR-00003)
+$idSesiTest = generate_id('SES', 'kuis_sesi', 'id_sesi');
+$db->prepare("
+    INSERT INTO kuis_sesi (id_sesi, id_konten, id_user, waktu_mulai, status)
+    VALUES (?, ?, 'USR-00003', CURRENT_TIMESTAMP, 'sedang_mengerjakan')
+")->execute([$idSesiTest, $idKontenKuis]);
+
+// Simpan jawaban: PG benar ($idOpsA), B/S benar ($idOpsBS1), Isian benar ('arlindo'), Essay terisi
+$idJaw1 = generate_id('JAW', 'kuis_jawaban', 'id_jawaban');
+$db->prepare("INSERT INTO kuis_jawaban (id_jawaban, id_sesi, id_soal, id_opsi_dipilih) VALUES (?, ?, ?, ?)")->execute([$idJaw1, $idSesiTest, $idSoalPG, $idOpsA]);
+$idJaw2 = generate_id('JAW', 'kuis_jawaban', 'id_jawaban');
+$db->prepare("INSERT INTO kuis_jawaban (id_jawaban, id_sesi, id_soal, id_opsi_dipilih) VALUES (?, ?, ?, ?)")->execute([$idJaw2, $idSesiTest, $idSoalBS, $idOpsBS1]);
+$idJaw3 = generate_id('JAW', 'kuis_jawaban', 'id_jawaban');
+$db->prepare("INSERT INTO kuis_jawaban (id_jawaban, id_sesi, id_soal, jawaban_teks) VALUES (?, ?, ?, ?)")->execute([$idJaw3, $idSesiTest, $idSoalIsian, 'arlindo']);
+$idJaw4 = generate_id('JAW', 'kuis_jawaban', 'id_jawaban');
+$db->prepare("INSERT INTO kuis_jawaban (id_jawaban, id_sesi, id_soal, jawaban_teks) VALUES (?, ?, ?, ?)")->execute([$idJaw4, $idSesiTest, $idSoalEssay, 'Zona subduksi lempeng menyebabkan terbentuknya palung dan palung Weber di Maluku.']);
+
+// Uji Fungsi Auto-Grading (PG, B/S, Isian auto-graded, Essay pending)
+$grading = hitung_nilai_kuis_sesi($db, $idSesiTest);
+assert_test("v3.6: Auto-grading kuis berhasil (PG + B/S + Isian = 75 skor skala 100)", 
+    (float)$grading['skor_skala_100'] === 75.0 && $grading['ada_essay'] === true && $grading['perlu_koreksi'] === true
+);
+
+// Uji Sinkronisasi ke Tabel Rekap Pengumpulan Tugas
+sync_kuis_ke_pengumpulan_tugas($db, $idKontenKuis, 'USR-00003', (float)$grading['skor_skala_100'], 'Hasil Auto-Grading Kuis');
+$syncedSubmit = $db->query("SELECT * FROM pengumpulan_tugas WHERE id_konten = '{$idKontenKuis}' AND id_user = 'USR-00003'")->fetch(PDO::FETCH_ASSOC);
+assert_test("v3.6: Sinkronisasi nilai kuis ke pengumpulan_tugas (Rekap Nilai) berhasil", 
+    !empty($syncedSubmit) && (float)$syncedSubmit['nilai'] === 75.0
+);
+
+// Uji Penilaian Manual Soal Essay oleh Dosen (memberikan 25 poin untuk essay)
+$db->prepare("UPDATE kuis_jawaban SET nilai_butir = 25.0, status_koreksi = 'dinilai' WHERE id_jawaban = ?")->execute([$idJaw4]);
+$gradingFinal = hitung_nilai_kuis_sesi($db, $idSesiTest);
+assert_test("v3.6: Koreksi essay oleh dosen memperbarui skor total menjadi 100", 
+    (float)$gradingFinal['skor_skala_100'] === 100.0 && $gradingFinal['perlu_koreksi'] === false
+);
+
 // Kembalikan session ke admin
 unset($_SESSION['impersonator']);
 $_SESSION['user_id'] = 'USR-00001';

@@ -6,24 +6,32 @@
 * **Infrastruktur**: Ubuntu Server 22.04 LTS, Apache2 (Event MPM), PHP 8.4-FPM, MariaDB InnoDB (VPS Dedicated)
 * **Arsitektur**: Server-Side Rendered (SSR) / Multi-Page Application (MPA) dengan Pola Post/Redirect/Get (PRG), Native PHP Sessions, Tailwind CSS, Lucide Icons, dan Vanilla JS
 * **Inisiator & Pengembang**: Budhi Agung Prasetyo, S.Pi., M.Si.
-* **Versi Terkini**: **v3.4 (Production Ready)**
+* **Versi Terkini**: **v3.6 (Bank Soal & Sistem Kuis Interaktif - Production Ready)**
 
 ---
 
 ## DAFTAR ISI RIWAYAT VERSI
 1. [Ringkasan Riwayat Versi (Milestone)](#1-ringkasan-riwayat-versi-milestone)
-2. [Detail Fitur Versi Terbaru: Versi 3.4](#2-detail-fitur-versi-terbaru-versi-34)
-   - [2.1 Sisi Pengajar: Fitur Edit Modul & Komponen Pembelajaran 16 Minggu](#21-sisi-pengajar-fitur-edit-modul--komponen-pembelajaran-16-minggu)
-3. [Riwayat Fitur Versi 3.3](#3-riwayat-fitur-versi-33)
-   - [3.1 Sisi Mahasiswa & Pengalaman Pengguna](#31-sisi-mahasiswa--pengalaman-pengguna)
-   - [3.2 Sisi Tampilan, Antarmuka & Reorganisasi Navigasi](#32-sisi-tampilan-antarmuka--reorganisasi-navigasi)
-   - [3.3 Sisi Keamanan & Manajemen Sesi](#33-sisi-keamanan--manajemen-sesi)
-4. [Riwayat Versi Sebelumnya (v1.0 s/d v3.2)](#4-riwayat-versi-sebelumnya-v10-sd-v32)
+2. [Detail Fitur Versi Terbaru: Versi 3.6](#2-detail-fitur-versi-terbaru-versi-36)
+   - [2.1 Bank Soal Perkuliahan (PG, Benar/Salah, Isian Singkat, Essay)](#21-bank-soal-perkuliahan-pg-benarsalah-isian-singkat-essay)
+   - [2.2 Kelola Rangkaian Soal Kuis Mingguan](#22-kelola-rangkaian-soal-kuis-mingguan)
+   - [2.3 Pengerjaan Kuis Interaktif Mahasiswa dengan Timer Hitung Mundur](#23-pengerjaan-kuis-interaktif-mahasiswa-dengan-timer-hitung-mundur)
+   - [2.4 Mesin Auto-Grading & Penilaian Manual Essay Dosen](#24-mesin-auto-grading--penilaian-manual-essay-dosen)
+   - [2.5 Integrasi Otomatis ke Rekap Nilai & Ekspor CSV/Excel](#25-integrasi-otomatis-ke-rekap-nilai--ekspor-csvexcel)
+3. [Riwayat Fitur Versi 3.5](#3-riwayat-fitur-versi-35)
+   - [3.1 Sisi Pengajar: Rekapitulasi Nilai Tugas Perkuliahan & Ekspor CSV/Excel](#31-sisi-pengajar-rekapitulasi-nilai-tugas-perkuliahan--ekspor-csvexcel)
+4. [Riwayat Fitur Versi 3.4](#4-riwayat-fitur-versi-34)
+   - [3.1 Sisi Pengajar: Fitur Edit Modul & Komponen Pembelajaran 16 Minggu](#31-sisi-pengajar-fitur-edit-modul--komponen-pembelajaran-16-minggu)
+4. [Riwayat Fitur Versi 3.3](#4-riwayat-fitur-versi-33)
+   - [4.1 Sisi Mahasiswa & Pengalaman Pengguna](#41-sisi-mahasiswa--pengalaman-pengguna)
+   - [4.2 Sisi Tampilan, Antarmuka & Reorganisasi Navigasi](#42-sisi-tampilan-antarmuka--reorganisasi-navigasi)
+   - [4.3 Sisi Keamanan & Manajemen Sesi](#43-sisi-keamanan--manajemen-sesi)
+5. [Riwayat Versi Sebelumnya (v1.0 s/d v3.2)](#5-riwayat-versi-sebelumnya-v10-sd-v32)
    - [Versi 3.2: Multi-Dosen, Batas Upload 50MB, Tautan Eksternal & Sortir Angkatan](#versi-32)
    - [Versi 3.1: Co-Branding Kelautan.ID & Resilient SQLite Local Fallback](#versi-31)
    - [Versi 3.0: Transformasi Arsitektur PHP 8.4 MPA & MariaDB VPS](#versi-30)
    - [Versi 1.0 – 2.5: Prototipe Google Apps Script & Google Sheets](#versi-10--25)
-5. [Tabel Matriks Perbandingan Fitur Antar Versi](#5-tabel-matriks-perbandingan-fitur-antar-versi)
+6. [Tabel Matriks Perbandingan Fitur Antar Versi](#6-tabel-matriks-perbandingan-fitur-antar-versi)
 
 ---
 
@@ -50,12 +58,82 @@
        │
        ▼
 [   v3.4   ]  Fitur Edit Modul & Komponen Pembelajaran Mingguan (Perubahan Pertemuan, Tipe,
-(TERKINI)     Judul, Deskripsi, Lampiran Berkas, URL Embed Eksternal, dan Tenggat Waktu)
+              Judul, Deskripsi, Lampiran Berkas, URL Embed Eksternal, dan Tenggat Waktu)
+       │
+       ▼
+[   v3.5   ]  Pusat Rekap Nilai Perkuliahan (/rekap-nilai), Tab Rekap Nilai Ruang Kelas
+              (/kelas/{id}/rekap), Matriks Nilai Mahasiswa 16 Minggu, Rata-rata Otomatis,
+              dan Ekspor Berkas CSV/Excel Kompatibel UTF-8 BOM & Semicolon Directive.
+       │
+       ▼
+[   v3.6   ]  Sistem Bank Soal Terpadu (/bank-soal) dengan 4 Tipe Soal (Pilihan Ganda,
+(TERKINI)     Benar/Salah, Isian Singkat, Essay), Rangkaian Soal Kuis Mingguan (/kuis/kelola/{id}),
+              Pengerjaan Kuis Interaktif Mahasiswa (/kuis/kerjakan/{id}) Berbasis Timer Countdown,
+              Mesin Auto-Grading Instan, Lembar Koreksi Essay Dosen (/kuis/nilai/{id}),
+              serta Sinkronisasi Otomatis ke Transkrip Rekap Nilai & Ekspor CSV/Excel.
 ```
 
 ---
 
-## 2. DETAIL FITUR VERSI TERBARU: VERSI 3.4
+## 2. DETAIL FITUR VERSI TERBARU: VERSI 3.6
+
+### 2.1 Bank Soal Perkuliahan (`/bank-soal`)
+1. **Master Repositori Butir Soal Terpusat**:
+   - Dosen dapat mengelola bank butir pertanyaan yang dapat dikaitkan dengan mata kuliah tertentu atau bersifat umum (*reusable* lintas kelas).
+   - Mendukung 4 tipe butir soal komprehensif:
+     - **Pilihan Ganda (PG)**: Teks pertanyaan, opsi jawaban (A s/d E), dan penentuan kunci jawaban benar dengan radio button satu klik.
+     - **Benar / Salah (True / False)**: Pernyataan evaluasi dengan kunci status Benar atau Salah.
+     - **Isian Singkat (Short Answer)**: Pertanyaan langsung dengan kunci jawaban teks (mendukung beberapa variasi kata kunci alternatif yang dipisahkan koma).
+     - **Essay / Uraian**: Pertanyaan analitis atau studi kasus mendalam disertai panduan rubrik penilaian untuk dosen pengampu.
+   - Dilengkapi filter per mata kuliah, filter per tipe soal, pencarian teks, bobot default, dan pembahasan rujukan materi.
+
+### 2.2 Kelola Rangkaian Soal Kuis Mingguan (`/kuis/kelola/{id_konten}`)
+1. **Penyusunan Paket Kuis Fleksibel**:
+   - Dosen dapat menghubungkan butir soal dari Bank Soal ke dalam Kuis/Ujian pada minggu perkuliahan tertentu.
+   - Fitur modal pemilih (*Question Picker*) yang memungkinkan pemilihan banyak soal secara massal (*bulk select*).
+   - Penyesuaian nomor urut pengerjaan soal dan penyesuaian bobot poin per butir soal untuk kuis terkait.
+   - Perhitungan otomatis total bobot kuis dan komposisi tipe soal secara *real-time*.
+
+### 2.3 Pengerjaan Kuis Interaktif Mahasiswa (`/kuis/kerjakan/{id_konten}`)
+1. **Antarmuka Pengerjaan yang Aman & Modern**:
+   - *Sticky Header Countdown Timer*: Menampilkan sisa waktu pengerjaan kuis yang berjalan secara *server-side timestamp* dan aman dari manipulasi jam lokal perangkat.
+   - Peringatan visual berdenyut (*pulse warning*) saat waktu tersisa di bawah 5 menit, dan mekanisme *auto-submit* otomatis saat waktu habis.
+   - Bilah navigasi nomor soal yang otomatis berubah warna hijau ketika butir soal telah dijawab.
+   - Input ramah pengguna untuk setiap tipe soal (kartu opsi PG, radio Benar/Salah, text input isian singkat, dan textarea essay).
+
+### 2.4 Mesin Auto-Grading & Penilaian Manual Essay Dosen (`/kuis/nilai/{id_konten}`)
+1. **Koreksi Otomatis 100% (Instant Grading)**:
+   - Begitu kuis diserahkan, sistem langsung menilai soal Pilihan Ganda, Benar/Salah, dan Isian Singkat (dengan normalisasi *case-insensitive*).
+2. **Lembar Koreksi Essay Dosen**:
+   - Jika kuis memuat butir essay, status kuis ditandai *"Perlu Koreksi Essay"*.
+   - Dosen membuka lembar jawaban mahasiswa, melihat perolehan butir objektif, dan memberikan nilai pada butir essay (0 s/d bobot maksimal) beserta catatan evaluasi spesifik.
+   - Menghitung ulang skor skala 0 - 100 secara instan dan menyimpan feedback umum ke riwayat mahasiswa.
+
+### 2.5 Integrasi Otomatis ke Rekap Nilai & Ekspor CSV/Excel
+1. Setiap sesi kuis yang telah selesai disinkronkan ke tabel `pengumpulan_tugas`, sehingga nilai kuis otomatis tercantum di tab **Rekap Nilai Perkuliahan**, matriks 16 minggu, serta ikut terunduh dalam berkas CSV/Excel.
+
+---
+
+## 3. RIWAYAT FITUR VERSI 3.5
+
+### 3.1 Sisi Pengajar: Rekapitulasi Nilai Tugas Perkuliahan & Ekspor CSV/Excel
+1. **Pusat Rekap Nilai Global (`/rekap-nilai`)**:
+   - Dosen dapat mengakses menu baru **"Rekap Nilai"** di Sidebar kiri desktop maupun drawer ponsel.
+   - Menampilkan seluruh mata kuliah yang diampu, jumlah mahasiswa terdaftar, dan jumlah tugas aktif dengan tombol akses cepat ke matriks nilai dan ekspor.
+2. **Tab Rekap Nilai di Ruang Kelas (`/kelas/{kode_mk}/rekap`)**:
+   - Tab ke-4 baru berdampingan dengan *16 Minggu Perkuliahan*, *Deskripsi & RPS*, dan *Peserta Kelas*.
+   - Menghitung statistik kelas: Total Mahasiswa, Total Tugas, Jumlah Tugas Terkumpul, dan Nilai Rata-rata Kelas.
+3. **Matriks Transkrip Tugas Mahasiswa**:
+   - Tabel responsif dengan kolom tetap (NIM, Nama Mahasiswa, Angkatan) dan kolom dinamis untuk setiap pertemuan yang memiliki tugas (M1 s/d M16).
+   - Menampilkan skor angka bergradien warna (Hijau $\ge 80$, Biru $65 - 79$, Kuning $< 65$), status kumpul belum dinilai, serta kalkulasi rata-rata nilai akhir secara *real-time*.
+4. **Ekspor CSV / Excel Fleksibel**:
+   - **Ekspor Lengkap 1 Semester**: Menghasilkan berkas CSV berisi seluruh nilai tugas mingguan mahasiswa beserta rata-ratanya.
+   - **Ekspor Khusus Per Pertemuan**: Menghasilkan berkas CSV untuk tugas tertentu lengkap dengan nama file jawaban, link Google Drive, dan waktu submit mahasiswa.
+   - Dilengkapi **UTF-8 BOM** (*Byte Order Mark*) agar langsung rapi dibuka di Microsoft Excel tanpa masalah encoding karakter atau pemisahan kolom.
+
+---
+
+## 3. RIWAYAT FITUR VERSI 3.4
 
 ### 2.1 Sisi Pengajar: Fitur Edit Modul & Komponen Pembelajaran 16 Minggu
 1. **Tombol Edit pada Setiap Komponen Pembelajaran**:
@@ -191,23 +269,24 @@
 
 ---
 
-## 5. TABEL MATRIKS PERBANDINGAN FITUR ANTAR VERSI
+## 6. TABEL MATRIKS PERBANDINGAN FITUR ANTAR VERSI
 
-| Modul / Fitur | Versi 2.5 (GAS) | Versi 3.0 (PHP MPA) | Versi 3.2 | Versi 3.3 | Versi 3.4 (Terkini) |
-|---|:---:|:---:|:---:|:---:|:---:|
-| **Basis Arsitektur** | SPA (Google Script) | MPA (PHP 8.4 SSR) | MPA (PHP 8.4 SSR) | MPA (PHP 8.4 SSR) | **MPA (PHP 8.4 SSR)** |
-| **Database** | Google Sheets | MariaDB InnoDB | MariaDB + SQLite Fallback | MariaDB + SQLite Fallback | **MariaDB + SQLite Fallback** |
-| **Navigasi Menu** | Header Menu Bar | Header Bar Penuh | Header Bar Penuh | Left Sidebar + Header Ringkas | **Left Sidebar + Header Ringkas** |
-| **Tema Halaman Login** | Putih Dasar | Abyssal Biru Gelap | Abyssal Biru Gelap | Cerah & Fresh Oceanic | **Cerah & Fresh Oceanic** |
-| **Kustomisasi Logo/Favicon** | Statis Hardcode | Statis File SVG | Statis File SVG | Dinamis via Panel Pengaturan | **Dinamis via Panel Pengaturan** |
-| **Tim Dosen Pengampu** | 1 Dosen Tunggal | 1 Dosen Tunggal | Team Teaching (3 Dosen) | Team Teaching (3 Dosen) | **Team Teaching (3 Dosen)** |
-| **Kelola Komponen Mingguan** | Tambah/Hapus | Tambah/Hapus | Tambah/Hapus | Tambah/Hapus | **Tambah, Hapus, & Edit Komprehensif** |
-| **Animasi Upload Tugas** | Tidak Ada | Tidak Ada | Tidak Ada | Overlay Modal Radar Maritim | **Overlay Modal Radar Maritim** |
-| **Format Tugas Mahasiswa** | PDF Saja | PDF Saja | PDF, PPT, Word, Excel + Link | PDF, PPT, Word, Excel + Link | **PDF, PPT, Word, Excel + Link** |
-| **Batas Upload Berkas** | Terbatas Base64 | Maks 10 MB | Slider s/d 50 MB | Slider s/d 50 MB | **Slider s/d 50 MB** |
-| **Sivitas Mahasiswa** | Daftar Panjang | Daftar Panjang | Daftar Panjang | Pagination 20 Baris / Halaman | **Pagination 20 Baris / Halaman** |
-| **Sesi & "Ingat Saya"** | LocalStorage Token | Sesi PHP Standar | Sesi PHP Standar | "Ingat Saya" 30 Hari & Idle 30m | **"Ingat Saya" 30 Hari & Idle 30m** |
-| **Fitur Login-As (Simulasi)** | Tidak Ada | Tidak Ada | Tidak Ada | Login-As Dosen & Mhs + Bilah Revert | **Login-As Dosen & Mhs + Bilah Revert** |
-| **Log Aktivitas & Audit Trail** | Tidak Ada | Tidak Ada | Tidak Ada | Audit Trail Lengkap, IP, & Ekspor CSV | **Audit Trail Lengkap, IP, & Ekspor CSV** |
-| **Pengingat Deadline Tugas** | Tidak Ada | Tidak Ada | Tidak Ada | Countdown Badge & Alert Banner | **Countdown Badge & Alert Banner** |
-| **Hak Cipta Footer** | Teks Polikant | Teks Gabungan Panjang | Teks Gabungan Panjang | Ringkas: © 2026 Kelautan.ID | **Ringkas: © 2026 Kelautan.ID** |
+| Modul / Fitur | Versi 2.5 (GAS) | Versi 3.0 (PHP MPA) | Versi 3.2 | Versi 3.3 | Versi 3.4 | Versi 3.5 (Terkini) |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Basis Arsitektur** | SPA (Google Script) | MPA (PHP 8.4 SSR) | MPA (PHP 8.4 SSR) | MPA (PHP 8.4 SSR) | MPA (PHP 8.4 SSR) | **MPA (PHP 8.4 SSR)** |
+| **Database** | Google Sheets | MariaDB InnoDB | MariaDB + SQLite Fallback | MariaDB + SQLite Fallback | MariaDB + SQLite Fallback | **MariaDB + SQLite Fallback** |
+| **Navigasi Menu** | Header Menu Bar | Header Bar Penuh | Header Bar Penuh | Left Sidebar + Header Ringkas | Left Sidebar + Header Ringkas | **Left Sidebar + Header Ringkas** |
+| **Tema Halaman Login** | Putih Dasar | Abyssal Biru Gelap | Abyssal Biru Gelap | Cerah & Fresh Oceanic | Cerah & Fresh Oceanic | **Cerah & Fresh Oceanic** |
+| **Kustomisasi Logo/Favicon** | Statis Hardcode | Statis File SVG | Statis File SVG | Dinamis via Panel Pengaturan | Dinamis via Panel Pengaturan | **Dinamis via Panel Pengaturan** |
+| **Tim Dosen Pengampu** | 1 Dosen Tunggal | 1 Dosen Tunggal | Team Teaching (3 Dosen) | Team Teaching (3 Dosen) | Team Teaching (3 Dosen) | **Team Teaching (3 Dosen)** |
+| **Kelola Komponen Mingguan** | Tambah/Hapus | Tambah/Hapus | Tambah/Hapus | Tambah/Hapus | Tambah, Hapus, & Edit Komprehensif | **Tambah, Hapus, & Edit Komprehensif** |
+| **Rekapitulasi Nilai & Ekspor** | Tidak Ada | Tidak Ada | Tidak Ada | Tidak Ada | Tidak Ada | **Matriks 16 Minggu & Ekspor CSV/Excel** |
+| **Animasi Upload Tugas** | Tidak Ada | Tidak Ada | Tidak Ada | Overlay Modal Radar Maritim | Overlay Modal Radar Maritim | **Overlay Modal Radar Maritim** |
+| **Format Tugas Mahasiswa** | PDF Saja | PDF Saja | PDF, PPT, Word, Excel + Link | PDF, PPT, Word, Excel + Link | PDF, PPT, Word, Excel + Link | **PDF, PPT, Word, Excel + Link** |
+| **Batas Upload Berkas** | Terbatas Base64 | Maks 10 MB | Slider s/d 50 MB | Slider s/d 50 MB | Slider s/d 50 MB | **Slider s/d 50 MB** |
+| **Sivitas Mahasiswa** | Daftar Panjang | Daftar Panjang | Daftar Panjang | Pagination 20 Baris / Halaman | Pagination 20 Baris / Halaman | **Pagination 20 Baris / Halaman** |
+| **Sesi & "Ingat Saya"** | LocalStorage Token | Sesi PHP Standar | Sesi PHP Standar | "Ingat Saya" 30 Hari & Idle 30m | "Ingat Saya" 30 Hari & Idle 30m | **"Ingat Saya" 30 Hari & Idle 30m** |
+| **Fitur Login-As (Simulasi)** | Tidak Ada | Tidak Ada | Tidak Ada | Login-As Dosen & Mhs + Bilah Revert | Login-As Dosen & Mhs + Bilah Revert | **Login-As Dosen & Mhs + Bilah Revert** |
+| **Log Aktivitas & Audit Trail** | Tidak Ada | Tidak Ada | Tidak Ada | Audit Trail Lengkap, IP, & Ekspor CSV | Audit Trail Lengkap, IP, & Ekspor CSV | **Audit Trail Lengkap, IP, & Ekspor CSV** |
+| **Pengingat Deadline Tugas** | Tidak Ada | Tidak Ada | Tidak Ada | Countdown Badge & Alert Banner | Countdown Badge & Alert Banner | **Countdown Badge & Alert Banner** |
+| **Hak Cipta Footer** | Teks Polikant | Teks Gabungan Panjang | Teks Gabungan Panjang | Ringkas: © 2026 Kelautan.ID | Ringkas: © 2026 Kelautan.ID | **Ringkas: © 2026 Kelautan.ID** |

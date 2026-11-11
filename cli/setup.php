@@ -145,6 +145,70 @@ if ($driver === 'sqlite') {
             impersonator_id TEXT DEFAULT NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
+
+        -- Bank Soal & Kuis
+        CREATE TABLE IF NOT EXISTS bank_soal (
+            id_soal TEXT PRIMARY KEY,
+            id_mk TEXT DEFAULT NULL,
+            id_dosen TEXT NOT NULL,
+            tipe_soal TEXT NOT NULL,
+            pertanyaan TEXT NOT NULL,
+            kunci_jawaban_teks TEXT DEFAULT NULL,
+            bobot_default NUMERIC DEFAULT 10.00,
+            pembahasan TEXT DEFAULT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (id_mk) REFERENCES mata_kuliah(id_mk) ON DELETE SET NULL,
+            FOREIGN KEY (id_dosen) REFERENCES users(id_user) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS bank_soal_opsi (
+            id_opsi TEXT PRIMARY KEY,
+            id_soal TEXT NOT NULL,
+            label_opsi TEXT NOT NULL,
+            teks_opsi TEXT NOT NULL,
+            is_benar INTEGER DEFAULT 0,
+            urutan INTEGER DEFAULT 1,
+            FOREIGN KEY (id_soal) REFERENCES bank_soal(id_soal) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS kuis_soal (
+            id_kuis_soal TEXT PRIMARY KEY,
+            id_konten TEXT NOT NULL,
+            id_soal TEXT NOT NULL,
+            urutan INTEGER DEFAULT 1,
+            bobot_nilai NUMERIC DEFAULT 10.00,
+            UNIQUE (id_konten, id_soal),
+            FOREIGN KEY (id_konten) REFERENCES konten_mingguan(id_konten) ON DELETE CASCADE,
+            FOREIGN KEY (id_soal) REFERENCES bank_soal(id_soal) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS kuis_sesi (
+            id_sesi TEXT PRIMARY KEY,
+            id_konten TEXT NOT NULL,
+            id_user TEXT NOT NULL,
+            waktu_mulai DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            waktu_selesai DATETIME DEFAULT NULL,
+            status TEXT NOT NULL DEFAULT 'sedang_mengerjakan',
+            total_nilai NUMERIC DEFAULT NULL,
+            catatan_koreksi TEXT DEFAULT NULL,
+            UNIQUE (id_konten, id_user),
+            FOREIGN KEY (id_konten) REFERENCES konten_mingguan(id_konten) ON DELETE CASCADE,
+            FOREIGN KEY (id_user) REFERENCES users(id_user) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS kuis_jawaban (
+            id_jawaban TEXT PRIMARY KEY,
+            id_sesi TEXT NOT NULL,
+            id_soal TEXT NOT NULL,
+            id_opsi_dipilih TEXT DEFAULT NULL,
+            jawaban_teks TEXT DEFAULT NULL,
+            nilai_butir NUMERIC DEFAULT 0.00,
+            status_koreksi TEXT NOT NULL DEFAULT 'otomatis',
+            catatan_dosen TEXT DEFAULT NULL,
+            UNIQUE (id_sesi, id_soal),
+            FOREIGN KEY (id_sesi) REFERENCES kuis_sesi(id_sesi) ON DELETE CASCADE,
+            FOREIGN KEY (id_soal) REFERENCES bank_soal(id_soal) ON DELETE CASCADE
+        );
     ");
 } else {
     // MariaDB / MySQL InnoDB Schema
@@ -265,6 +329,78 @@ if ($driver === 'sqlite') {
             INDEX idx_log_created (created_at DESC),
             INDEX idx_log_user (id_user),
             INDEX idx_log_tipe (tipe_aktivitas)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        -- Bank Soal & Kuis
+        CREATE TABLE IF NOT EXISTS bank_soal (
+            id_soal VARCHAR(30) NOT NULL PRIMARY KEY,
+            id_mk VARCHAR(20) DEFAULT NULL,
+            id_dosen VARCHAR(20) NOT NULL,
+            tipe_soal ENUM('pg', 'benar_salah', 'isian', 'essay') NOT NULL,
+            pertanyaan MEDIUMTEXT NOT NULL,
+            kunci_jawaban_teks TEXT DEFAULT NULL,
+            bobot_default DECIMAL(5,2) NOT NULL DEFAULT 10.00,
+            pembahasan TEXT DEFAULT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT fk_bs_mk FOREIGN KEY (id_mk) REFERENCES mata_kuliah(id_mk) ON DELETE SET NULL,
+            CONSTRAINT fk_bs_dosen FOREIGN KEY (id_dosen) REFERENCES users(id_user) ON DELETE CASCADE,
+            INDEX idx_bank_soal_mk (id_mk),
+            INDEX idx_bank_soal_dosen (id_dosen),
+            INDEX idx_bank_soal_tipe (tipe_soal)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE IF NOT EXISTS bank_soal_opsi (
+            id_opsi VARCHAR(30) NOT NULL PRIMARY KEY,
+            id_soal VARCHAR(30) NOT NULL,
+            label_opsi VARCHAR(10) NOT NULL,
+            teks_opsi TEXT NOT NULL,
+            is_benar TINYINT(1) NOT NULL DEFAULT 0,
+            urutan TINYINT UNSIGNED NOT NULL DEFAULT 1,
+            CONSTRAINT fk_bso_soal FOREIGN KEY (id_soal) REFERENCES bank_soal(id_soal) ON DELETE CASCADE,
+            INDEX idx_bso_soal (id_soal)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE IF NOT EXISTS kuis_soal (
+            id_kuis_soal VARCHAR(30) NOT NULL PRIMARY KEY,
+            id_konten VARCHAR(20) NOT NULL,
+            id_soal VARCHAR(30) NOT NULL,
+            urutan TINYINT UNSIGNED NOT NULL DEFAULT 1,
+            bobot_nilai DECIMAL(5,2) NOT NULL DEFAULT 10.00,
+            UNIQUE KEY uq_konten_soal (id_konten, id_soal),
+            CONSTRAINT fk_ks_konten FOREIGN KEY (id_konten) REFERENCES konten_mingguan(id_konten) ON DELETE CASCADE,
+            CONSTRAINT fk_ks_soal FOREIGN KEY (id_soal) REFERENCES bank_soal(id_soal) ON DELETE CASCADE,
+            INDEX idx_ks_konten (id_konten)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE IF NOT EXISTS kuis_sesi (
+            id_sesi VARCHAR(30) NOT NULL PRIMARY KEY,
+            id_konten VARCHAR(20) NOT NULL,
+            id_user VARCHAR(20) NOT NULL,
+            waktu_mulai DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            waktu_selesai DATETIME DEFAULT NULL,
+            status ENUM('sedang_mengerjakan', 'selesai', 'waktu_habis') NOT NULL DEFAULT 'sedang_mengerjakan',
+            total_nilai DECIMAL(5,2) DEFAULT NULL,
+            catatan_koreksi TEXT DEFAULT NULL,
+            UNIQUE KEY uq_sesi_konten_user (id_konten, id_user),
+            CONSTRAINT fk_kses_konten FOREIGN KEY (id_konten) REFERENCES konten_mingguan(id_konten) ON DELETE CASCADE,
+            CONSTRAINT fk_kses_user FOREIGN KEY (id_user) REFERENCES users(id_user) ON DELETE CASCADE,
+            INDEX idx_kses_konten (id_konten),
+            INDEX idx_kses_user (id_user)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE IF NOT EXISTS kuis_jawaban (
+            id_jawaban VARCHAR(30) NOT NULL PRIMARY KEY,
+            id_sesi VARCHAR(30) NOT NULL,
+            id_soal VARCHAR(30) NOT NULL,
+            id_opsi_dipilih VARCHAR(30) DEFAULT NULL,
+            jawaban_teks MEDIUMTEXT DEFAULT NULL,
+            nilai_butir DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+            status_koreksi ENUM('otomatis', 'perlu_koreksi', 'dinilai') NOT NULL DEFAULT 'otomatis',
+            catatan_dosen TEXT DEFAULT NULL,
+            UNIQUE KEY uq_jawaban_sesi_soal (id_sesi, id_soal),
+            CONSTRAINT fk_kjaw_sesi FOREIGN KEY (id_sesi) REFERENCES kuis_sesi(id_sesi) ON DELETE CASCADE,
+            CONSTRAINT fk_kjaw_soal FOREIGN KEY (id_soal) REFERENCES bank_soal(id_soal) ON DELETE CASCADE,
+            INDEX idx_kjaw_sesi (id_sesi)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     ");
 }
