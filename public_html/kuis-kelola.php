@@ -74,10 +74,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmtMaxUrut->execute([$idKonten]);
                 $lastUrutan = (int)($stmtMaxUrut->fetchColumn() ?: 0);
 
-                $stmtIns = $db->prepare("
-                    INSERT OR IGNORE INTO kuis_soal (id_kuis_soal, id_konten, id_soal, urutan, bobot_nilai)
-                    VALUES (?, ?, ?, ?, ?)
-                ");
+                // Dukungan multi-database: SQLite pakai 'INSERT OR IGNORE', MariaDB/MySQL pakai 'INSERT IGNORE'
+                $driver = get_active_db_driver();
+                $insertSql = ($driver === 'sqlite')
+                    ? "INSERT OR IGNORE INTO kuis_soal (id_kuis_soal, id_konten, id_soal, urutan, bobot_nilai) VALUES (?, ?, ?, ?, ?)"
+                    : "INSERT IGNORE INTO kuis_soal (id_kuis_soal, id_konten, id_soal, urutan, bobot_nilai) VALUES (?, ?, ?, ?, ?)";
+
+                $stmtIns = $db->prepare($insertSql);
 
                 // Ambil bobot default soal
                 $placeholders = implode(',', array_fill(0, count($selectedSoalIds), '?'));
