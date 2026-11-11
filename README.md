@@ -34,33 +34,45 @@ Platform pembelajaran daring (*Learning Management System*) konvensional berbasi
    * **Foto Profil (v1.1)**: Seluruh pengguna dapat mengunggah dan memperbarui foto profil mereka sendiri secara aman.
 
 5. **Pengumpulan & Penilaian Tugas Mahasiswa**:
-   * Validasi MIME asli (`finfo_file()`) khusus PDF dengan ukuran maks. 10 MB.
+   * Validasi MIME asli (`finfo_file()`) khusus PDF, Word, Excel, PPT dengan ukuran s/d 50 MB.
    * Penamaan otomatis berkas: `[NIM]_[Nama_Tugas_Sanitized].pdf`.
    * Halaman pemeriksaan berkas, input nilai numerik (0–100), dan feedback kualitatif oleh dosen.
+   * Dukungan pengumpulan tugas via tautan Google Drive / OneDrive.
 
-6. **Impor Massal & Manajemen Sivitas (v1.1)**:
+6. **Sistem Bank Soal & Kuis Interaktif (v3.6)**:
+   * **Master Bank Soal Terpadu (`/bank-soal`)**: Repositori soal perkuliahan dengan 4 tipe: Pilihan Ganda (PG), Benar/Salah (B/S), Isian Singkat, dan Essay/Uraian.
+   * **Kelola Rangkaian Kuis (`/kuis/kelola/{id}`)**: Memilih massal butir soal dari bank soal, mengatur bobot nilai, dan urutan soal.
+   * **Pengaturan Durasi Timer Kuis**: Pengaturan batas waktu pengerjaan timer kuis (menit) dengan tombol pilihan cepat (15m, 30m, 45m, 60m, 90m, tanpa batas).
+   * **Pengerjaan Kuis Interaktif Mahasiswa (`/kuis/kerjakan/{id}`)**: Antarmuka pengerjaan modern dengan *Sticky Countdown Timer* dan mekanisme *auto-submit* saat waktu habis.
+   * **Mesin Auto-Grading & Koreksi Essay (`/kuis/nilai/{id}`)**: Koreksi instan 100% untuk soal objektif (PG, B/S, Isian) dan lembar penilaian manual untuk butir essay.
+   * **Penanganan Cerdas Kuis Eksternal**: Kuis berbasis Google Forms/eksternal secara otomatis hanya menampilkan tombol *"Buka Kuis Daring"* langsung ke tab baru tanpa memunculkan status pengerjaan kuis internal.
+
+7. **Pusat Rekap Nilai Perkuliahan & Ekspor CSV/Excel (v3.5)**:
+   * **Dashboard Rekap Global (`/rekap-nilai`)**: Menampilkan seluruh mata kuliah yang diampu, peserta, dan tugas aktif.
+   * **Tab Rekap Nilai Ruang Kelas (`/kelas/{kode_mk}/rekap`)**: Matriks transkrip nilai mahasiswa 16 pertemuan dengan rata-rata nilai kelas dan status pengerjaan.
+   * **Ekspor CSV / Excel**: Ekspor data transkrip nilai semesteran maupun per pertemuan spesifik dengan format rapi (UTF-8 BOM).
+
+8. **Audit Trail, Simulasi Akun & Keamanan (v3.3 - v3.4)**:
+   * **Log Aktivitas Lengkap (`/log-aktivitas`)**: Pencatatan audit trail menyeluruh atas login, upload tugas, penilaian, dan perubahan sistem.
+   * **Simulasi Akun / Login-As (`/login-as`)**: Kemampuan Dosen Admin melakukan simulasi sebagai Mahasiswa atau Dosen lain dengan bilah kuning revert instan.
+   * **Pengingat Tenggat Waktu (*Deadlines Alert*)**: Notifikasi hitung mundur sisa waktu tugas/kuis di dashboard mahasiswa.
+   * **Fitur Edit Komponen Pembelajaran**: Dosen dapat menyunting pertemuan, judul, deskripsi, file pengganti, dan tenggat waktu.
+
+9. **Impor Massal & Manajemen Sivitas (v1.1)**:
    * Salin-tempel ratusan baris data dari Excel/Google Sheets ke textarea.
    * Parsing cerdas pemisah kolom TAB, Koma, Titik Koma, atau Pipe.
    * Pembuatan akun individual dengan pilihan peran: *Mahasiswa*, *Dosen Biasa*, atau *Dosen Admin*.
 
-7. **Pengaturan Branding Dinamis & Footer Terpadu (v1.1)**:
+10. **Pengaturan Branding Dinamis & Footer Terpadu (v1.1)**:
    * Kustomisasi penuh teks footer, deskripsi platform, tautan cepat, dan informasi kontak/bantuan langsung dari antarmuka Pengaturan.
-   * Unduh cadangan database `.sql`.
-   * Reset database terproteksi kata sandi.
+   * Opsi unggah custom logo dan custom favicon.
+   * Unduh cadangan database `.sql` dan reset database terproteksi kata sandi.
 
-8. **Pembersihan Log Konsol & Optimasi Keamanan (v1.2)**:
-   * Filter supresi peringatan Tailwind CDN development di browser console.
-   * Penjelasan status integrasi Cloudflare Web Analytics beacon.
-
-9. **URL Cantik & Estetik RESTful (v1.3)**:
-   * **Bebas Ekstensi `.php`**: Seluruh tautan menggunakan routing bersih seperti `/login`, `/dashboard`, `/mata-kuliah`, `/tahun-akademik`, `/mahasiswa`, `/profil`, `/pengaturan`, dan `/logout`.
-   * **Rute Kelas RESTful**:
-     - Ruang Kelas Utama: `/kelas/{id_mk}` (misal: `/kelas/MK-00001`)
-     - Tab Pertemuan 1–16: `/kelas/{id_mk}/pertemuan`
-     - Tab Dokumen Kurikulum & RPS: `/kelas/{id_mk}/rps`
-     - Tab Peserta Kelas: `/kelas/{id_mk}/peserta`
-   * **Rute Penilaian Tugas**: `/nilai/{id_konten}` (misal: `/nilai/KNT-00002`)
-   * **Dukungan Apache & Router Lokal**: Dilengkapi konfigurasi Apache `public_html/.htaccess` (`mod_rewrite`) dengan proteksi 301 redirect untuk request `.php` lama serta router dev bawaan `router.php`.
+11. **URL Cantik & Estetik RESTful (v1.3 & v3.6)**:
+   * **Bebas Ekstensi `.php`**: Seluruh tautan menggunakan routing bersih seperti `/login`, `/dashboard`, `/mata-kuliah`, `/tahun-akademik`, `/mahasiswa`, `/rekap-nilai`, `/bank-soal`, `/profil`, `/pengaturan`, dan `/logout`.
+   * **Rute Modul Kuis RESTful**: `/kuis/kelola/{id_konten}`, `/kuis/kerjakan/{id_konten}`, `/kuis/nilai/{id_konten}`.
+   * **Rute Kelas RESTful**: `/kelas/{kode_mk}/pertemuan`, `/kelas/{kode_mk}/rps`, `/kelas/{kode_mk}/peserta`, `/kelas/{kode_mk}/rekap`.
+   * **Rute Penilaian Tugas**: `/nilai/{id_konten}`.
 
 ---
 

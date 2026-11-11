@@ -6,7 +6,7 @@
 * **Infrastruktur**: Ubuntu Server 22.04 LTS, Apache2 (Event MPM), PHP 8.4-FPM, MariaDB InnoDB (VPS Dedicated)
 * **Arsitektur**: Server-Side Rendered (SSR) / Multi-Page Application (MPA) dengan Pola Post/Redirect/Get (PRG), Native PHP Sessions, Tailwind CSS, Lucide Icons, dan Vanilla JS
 * **Inisiator & Pengembang**: Budhi Agung Prasetyo, S.Pi., M.Si.
-* **Versi Terkini**: **v3.6 (Bank Soal & Sistem Kuis Interaktif - Production Ready)**
+* **Versi Terkini**: **v3.6.2 (Bank Soal, Kuis Interaktif, Timer & External Quiz Handling - Production Ready)**
 
 ---
 
@@ -18,6 +18,10 @@
    - [2.3 Pengerjaan Kuis Interaktif Mahasiswa dengan Timer Hitung Mundur](#23-pengerjaan-kuis-interaktif-mahasiswa-dengan-timer-hitung-mundur)
    - [2.4 Mesin Auto-Grading & Penilaian Manual Essay Dosen](#24-mesin-auto-grading--penilaian-manual-essay-dosen)
    - [2.5 Integrasi Otomatis ke Rekap Nilai & Ekspor CSV/Excel](#25-integrasi-otomatis-ke-rekap-nilai--ekspor-csvexcel)
+   - [2.6 Pengaturan Durasi Timer Kuis Interaktif](#26-pengaturan-durasi-timer-kuis-interaktif)
+   - [2.7 Penanganan Cerdas Kuis Tautan Eksternal vs Bank Soal Internal](#27-penanganan-cerdas-kuis-tautan-eksternal-vs-bank-soal-internal)
+   - [2.8 Kompatibilitas Multi-Database (MariaDB VPS & SQLite Lokal)](#28-kompatibilitas-multi-database-mariadb-vps--sqlite-lokal)
+   - [2.9 Konfigurasi Apache Routing & Canonical Clean URLs](#29-konfigurasi-apache-routing--canonical-clean-urls)
 3. [Riwayat Fitur Versi 3.5](#3-riwayat-fitur-versi-35)
    - [3.1 Sisi Pengajar: Rekapitulasi Nilai Tugas Perkuliahan & Ekspor CSV/Excel](#31-sisi-pengajar-rekapitulasi-nilai-tugas-perkuliahan--ekspor-csvexcel)
 4. [Riwayat Fitur Versi 3.4](#4-riwayat-fitur-versi-34)
@@ -111,6 +115,34 @@
 
 ### 2.5 Integrasi Otomatis ke Rekap Nilai & Ekspor CSV/Excel
 1. Setiap sesi kuis yang telah selesai disinkronkan ke tabel `pengumpulan_tugas`, sehingga nilai kuis otomatis tercantum di tab **Rekap Nilai Perkuliahan**, matriks 16 minggu, serta ikut terunduh dalam berkas CSV/Excel.
+
+### 2.6 Pengaturan Durasi Timer Kuis Interaktif
+1. **Fleksibilitas Durasi Timer**:
+   - Dosen dapat mengatur batas waktu durasi pengerjaan timer kuis (dalam satuan menit) melalui:
+     - **Modal "Atur Durasi & Deadline" di Halaman Kelola Kuis (`/kuis/kelola/{id}`)**: Dilengkapi tombol preset cepat (15m, 30m, 45m, 60m, 90m, dan Tanpa Timer) serta pengaturan *deadline* tanggal & jam.
+     - **Modal Tambah & Edit Komponen di Ruang Kelas (`ruang-kelas.php`)**: Muncul otomatis saat tipe komponen dipilih *Kuis* atau *Ujian*.
+   - Jika durasi disetel, saat mahasiswa mulai mengerjakan kuis, *countdown timer* akan berjalan di bagian atas halaman dan otomatis mengirimkan (*auto-submit*) jawaban jika waktu habis.
+   - Jika dikosongkan (tanpa timer), mahasiswa dapat mengerjakan secara bebas hingga batas tanggal *deadline*.
+
+### 2.7 Penanganan Cerdas Kuis Tautan Eksternal vs Bank Soal Internal
+1. **Kondisional Tampilan Ruang Kelas**:
+   - **Kuis Internal (Bank Soal LMS)**: Mahasiswa melihat kotak *Status Pengerjaan Kuis Daring*, ringkasan butir soal, status nilai, dan tombol *"Mulai Kerjakan Kuis"* / *"Lanjutkan Kuis"*. Dosen melihat tombol *"Kelola Soal"* dan *"Nilai"*.
+   - **Kuis Eksternal (Google Forms / Quizizz dsb.)**: Jika komponen kuis memiliki `url_embed` eksternal, sistem secara cerdas menyembunyikan kotak status pengerjaan kuis LMS dan hanya menampilkan tombol **"Buka Kuis Daring"** yang langsung membuka URL kuis eksternal di tab baru. Tombol *Preview Link* modal dinonaktifkan khusus kuis/ujian untuk menghindari pemblokiran *iframe* (*X-Frame-Options*).
+2. **Pengalihan Otomatis (*Fallback Redirect*)**:
+   - Jika mahasiswa langsung mengunjungi URL `/kuis/kerjakan/{id}` pada kuis bertautan eksternal, sistem langsung me-redirect browser mahasiswa ke URL eksternal tersebut.
+
+### 2.8 Kompatibilitas Multi-Database (MariaDB VPS & SQLite Lokal)
+1. **Resiliensi Sintaks SQL Lintas Driver**:
+   - Mengatasi perbedaan sintaks *bulk insert* ignore antara SQLite (`INSERT OR IGNORE`) dan MariaDB / MySQL (`INSERT IGNORE`).
+   - Helper `get_active_db_driver()` mendeteksi driver database secara dinamis sehingga query berjalan mulus tanpa error baik di server produksi VPS (MariaDB) maupun lingkungan lokal (SQLite).
+
+### 2.9 Konfigurasi Apache Routing & Canonical Clean URLs
+1. **Routing Apache `.htaccess` di Server VPS**:
+   - Penambahan aturan `RewriteRule` untuk rute RESTful modul kuis:
+     - `RewriteRule ^kuis/kelola/([^/]+)/?$ kuis-kelola.php?id_konten=$1 [QSA,L]`
+     - `RewriteRule ^kuis/kerjakan/([^/]+)/?$ kuis-kerjakan.php?id_konten=$1 [QSA,L]`
+     - `RewriteRule ^kuis/nilai/([^/]+)/?$ kuis-nilai.php?id_konten=$1 [QSA,L]`
+   - Mencegah error 404 pada tautan bersih kuis di server web Apache produksi.
 
 ---
 
@@ -271,22 +303,20 @@
 
 ## 6. TABEL MATRIKS PERBANDINGAN FITUR ANTAR VERSI
 
-| Modul / Fitur | Versi 2.5 (GAS) | Versi 3.0 (PHP MPA) | Versi 3.2 | Versi 3.3 | Versi 3.4 | Versi 3.5 (Terkini) |
+| Modul / Fitur | Versi 2.5 (GAS) | Versi 3.0 (PHP MPA) | Versi 3.3 | Versi 3.4 | Versi 3.5 | Versi 3.6 (Terkini) |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
 | **Basis Arsitektur** | SPA (Google Script) | MPA (PHP 8.4 SSR) | MPA (PHP 8.4 SSR) | MPA (PHP 8.4 SSR) | MPA (PHP 8.4 SSR) | **MPA (PHP 8.4 SSR)** |
-| **Database** | Google Sheets | MariaDB InnoDB | MariaDB + SQLite Fallback | MariaDB + SQLite Fallback | MariaDB + SQLite Fallback | **MariaDB + SQLite Fallback** |
-| **Navigasi Menu** | Header Menu Bar | Header Bar Penuh | Header Bar Penuh | Left Sidebar + Header Ringkas | Left Sidebar + Header Ringkas | **Left Sidebar + Header Ringkas** |
-| **Tema Halaman Login** | Putih Dasar | Abyssal Biru Gelap | Abyssal Biru Gelap | Cerah & Fresh Oceanic | Cerah & Fresh Oceanic | **Cerah & Fresh Oceanic** |
-| **Kustomisasi Logo/Favicon** | Statis Hardcode | Statis File SVG | Statis File SVG | Dinamis via Panel Pengaturan | Dinamis via Panel Pengaturan | **Dinamis via Panel Pengaturan** |
-| **Tim Dosen Pengampu** | 1 Dosen Tunggal | 1 Dosen Tunggal | Team Teaching (3 Dosen) | Team Teaching (3 Dosen) | Team Teaching (3 Dosen) | **Team Teaching (3 Dosen)** |
-| **Kelola Komponen Mingguan** | Tambah/Hapus | Tambah/Hapus | Tambah/Hapus | Tambah/Hapus | Tambah, Hapus, & Edit Komprehensif | **Tambah, Hapus, & Edit Komprehensif** |
-| **Rekapitulasi Nilai & Ekspor** | Tidak Ada | Tidak Ada | Tidak Ada | Tidak Ada | Tidak Ada | **Matriks 16 Minggu & Ekspor CSV/Excel** |
-| **Animasi Upload Tugas** | Tidak Ada | Tidak Ada | Tidak Ada | Overlay Modal Radar Maritim | Overlay Modal Radar Maritim | **Overlay Modal Radar Maritim** |
-| **Format Tugas Mahasiswa** | PDF Saja | PDF Saja | PDF, PPT, Word, Excel + Link | PDF, PPT, Word, Excel + Link | PDF, PPT, Word, Excel + Link | **PDF, PPT, Word, Excel + Link** |
-| **Batas Upload Berkas** | Terbatas Base64 | Maks 10 MB | Slider s/d 50 MB | Slider s/d 50 MB | Slider s/d 50 MB | **Slider s/d 50 MB** |
-| **Sivitas Mahasiswa** | Daftar Panjang | Daftar Panjang | Daftar Panjang | Pagination 20 Baris / Halaman | Pagination 20 Baris / Halaman | **Pagination 20 Baris / Halaman** |
-| **Sesi & "Ingat Saya"** | LocalStorage Token | Sesi PHP Standar | Sesi PHP Standar | "Ingat Saya" 30 Hari & Idle 30m | "Ingat Saya" 30 Hari & Idle 30m | **"Ingat Saya" 30 Hari & Idle 30m** |
-| **Fitur Login-As (Simulasi)** | Tidak Ada | Tidak Ada | Tidak Ada | Login-As Dosen & Mhs + Bilah Revert | Login-As Dosen & Mhs + Bilah Revert | **Login-As Dosen & Mhs + Bilah Revert** |
-| **Log Aktivitas & Audit Trail** | Tidak Ada | Tidak Ada | Tidak Ada | Audit Trail Lengkap, IP, & Ekspor CSV | Audit Trail Lengkap, IP, & Ekspor CSV | **Audit Trail Lengkap, IP, & Ekspor CSV** |
-| **Pengingat Deadline Tugas** | Tidak Ada | Tidak Ada | Tidak Ada | Countdown Badge & Alert Banner | Countdown Badge & Alert Banner | **Countdown Badge & Alert Banner** |
-| **Hak Cipta Footer** | Teks Polikant | Teks Gabungan Panjang | Teks Gabungan Panjang | Ringkas: © 2026 Kelautan.ID | Ringkas: © 2026 Kelautan.ID | **Ringkas: © 2026 Kelautan.ID** |
+| **Database** | Google Sheets | MariaDB InnoDB | MariaDB + SQLite | MariaDB + SQLite | MariaDB + SQLite | **MariaDB + SQLite Multi-Driver** |
+| **Navigasi Menu** | Header Menu Bar | Header Bar Penuh | Left Sidebar + Header | Left Sidebar + Header | Left Sidebar + Header | **Left Sidebar + Header Ringkas** |
+| **Tema Halaman Login** | Putih Dasar | Abyssal Biru Gelap | Cerah & Fresh Oceanic | Cerah & Fresh Oceanic | Cerah & Fresh Oceanic | **Cerah & Fresh Oceanic** |
+| **Kelola Komponen Mingguan** | Tambah/Hapus | Tambah/Hapus | Tambah/Hapus | Tambah, Hapus, & Edit | Tambah, Hapus, & Edit | **Tambah, Hapus, Edit & Timer** |
+| **Rekapitulasi Nilai & Ekspor** | Tidak Ada | Tidak Ada | Tidak Ada | Tidak Ada | Matriks 16M & CSV/Excel | **Matriks 16M + Kuis & CSV/Excel** |
+| **Bank Soal Terpadu** | Tidak Ada | Tidak Ada | Tidak Ada | Tidak Ada | Tidak Ada | **4 Tipe: PG, B/S, Isian, Essay** |
+| **Kuis Interaktif Mahasiswa** | Link Eksternal | Link Eksternal | Link Eksternal | Link Eksternal | Link Eksternal | **LMS Native Quiz + Countdown Timer** |
+| **Auto-Grading & Koreksi Essay** | Tidak Ada | Tidak Ada | Tidak Ada | Tidak Ada | Tidak Ada | **Instant Grading + Lembar Koreksi Dosen** |
+| **Penanganan Kuis Eksternal** | Buka Link | Buka Link | Buka Link | Buka Link | Buka Link | **Cerdas: Buka Link Langsung Tanpa Status LMS** |
+| **Animasi Upload Tugas** | Tidak Ada | Tidak Ada | Overlay Radar Maritim | Overlay Radar Maritim | Overlay Radar Maritim | **Overlay Radar Maritim** |
+| **Format Tugas Mahasiswa** | PDF Saja | PDF Saja | PDF, PPT, DOC, XLS + Link | PDF, PPT, DOC, XLS + Link | PDF, PPT, DOC, XLS + Link | **PDF, PPT, DOC, XLS + Link** |
+| **Fitur Login-As (Simulasi)** | Tidak Ada | Tidak Ada | Dosen & Mhs + Bilah Revert | Dosen & Mhs + Bilah Revert | Dosen & Mhs + Bilah Revert | **Dosen & Mhs + Bilah Revert** |
+| **Log Aktivitas & Audit Trail** | Tidak Ada | Tidak Ada | Audit Trail & Ekspor CSV | Audit Trail & Ekspor CSV | Audit Trail & Ekspor CSV | **Audit Trail Lengkap & Ekspor CSV** |
+| **Pengingat Deadline** | Tidak Ada | Tidak Ada | Countdown Badge & Alert | Countdown Badge & Alert | Countdown Badge & Alert | **Countdown Badge, Alert & Timer Kuis** |
