@@ -802,18 +802,20 @@ require_once __DIR__ . '/../includes/navbar.php';
                                                                 <span>Periksa & Nilai (<?= (int)$item['total_submit'] ?>)</span>
                                                             </a>
                                                         <?php elseif (in_array($item['tipe'], ['Kuis', 'Ujian'])): ?>
-                                                            <a href="/kuis/kelola/<?= urlencode($item['id_konten']) ?>" 
-                                                               class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-cyan-900 bg-cyan-100 hover:bg-cyan-200 border border-cyan-300 transition"
-                                                               title="Kelola butir soal kuis dari Bank Soal">
-                                                                <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
-                                                                <span>Kelola Soal (<?= (int)($item['total_soal_kuis'] ?? 0) ?>)</span>
-                                                            </a>
-                                                            <a href="/kuis/nilai/<?= urlencode($item['id_konten']) ?>" 
-                                                               class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-white bg-maritime-700 hover:bg-maritime-800 transition"
-                                                               title="Lihat hasil & koreksi nilai kuis mahasiswa">
-                                                                <i data-lucide="award" class="w-3.5 h-3.5"></i>
-                                                                <span>Nilai (<?= (int)($item['total_submit_kuis'] ?? 0) ?>)</span>
-                                                            </a>
+                                                            <?php if (empty($item['url_embed'])): ?>
+                                                                <a href="/kuis/kelola/<?= urlencode($item['id_konten']) ?>" 
+                                                                   class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-cyan-900 bg-cyan-100 hover:bg-cyan-200 border border-cyan-300 transition"
+                                                                   title="Kelola butir soal kuis dari Bank Soal">
+                                                                    <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
+                                                                    <span>Kelola Soal (<?= (int)($item['total_soal_kuis'] ?? 0) ?>)</span>
+                                                                </a>
+                                                                <a href="/kuis/nilai/<?= urlencode($item['id_konten']) ?>" 
+                                                                   class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-white bg-maritime-700 hover:bg-maritime-800 transition"
+                                                                   title="Lihat hasil & koreksi nilai kuis mahasiswa">
+                                                                    <i data-lucide="award" class="w-3.5 h-3.5"></i>
+                                                                    <span>Nilai (<?= (int)($item['total_submit_kuis'] ?? 0) ?>)</span>
+                                                                </a>
+                                                            <?php endif; ?>
                                                         <?php endif; ?>
 
                                                         <!-- Tombol Edit Konten -->
@@ -875,13 +877,15 @@ require_once __DIR__ . '/../includes/navbar.php';
 
                                                 <!-- Link Eksternal / URL Ujian / Portal Kelautan.ID -->
                                                 <?php if (!empty($item['url_embed'])): ?>
-                                                    <!-- Tombol Preview Modal Link Eksternal -->
-                                                    <button type="button" 
-                                                            onclick="openPdfModal('<?= htmlspecialchars(addslashes($item['url_embed'])) ?>', 'Pratinjau Tautan: <?= htmlspecialchars(addslashes($item['judul'])) ?>')"
-                                                            class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl font-semibold text-xs text-teal-800 bg-teal-100 hover:bg-teal-200 transition shadow-sm">
-                                                        <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-                                                        <span>Preview Link</span>
-                                                    </button>
+                                                    <?php if (!in_array($item['tipe'], ['Kuis', 'Ujian'])): ?>
+                                                        <!-- Tombol Preview Modal Link Eksternal -->
+                                                        <button type="button" 
+                                                                onclick="openPdfModal('<?= htmlspecialchars(addslashes($item['url_embed'])) ?>', 'Pratinjau Tautan: <?= htmlspecialchars(addslashes($item['judul'])) ?>')"
+                                                                class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl font-semibold text-xs text-teal-800 bg-teal-100 hover:bg-teal-200 transition shadow-sm">
+                                                            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                                                            <span>Preview Link</span>
+                                                        </button>
+                                                    <?php endif; ?>
 
                                                     <!-- Tombol Buka di Tab Baru -->
                                                     <a href="<?= htmlspecialchars($item['url_embed']) ?>" target="_blank" rel="noopener noreferrer"
@@ -1071,7 +1075,7 @@ require_once __DIR__ . '/../includes/navbar.php';
                                             <?php endif; ?>
 
                                             <!-- AREA PENGERJAAN KUIS INTERAKTIF KHUSUS MAHASISWA -->
-                                            <?php if (!$isDosen && in_array($item['tipe'], ['Kuis', 'Ujian'])): ?>
+                                            <?php if (!$isDosen && in_array($item['tipe'], ['Kuis', 'Ujian']) && empty($item['url_embed'])): ?>
                                                 <?php 
                                                     $mySesi = $userQuizSessions[$item['id_konten']] ?? null; 
                                                     $isKuisSubmitted = $mySesi && in_array($mySesi['status'], ['selesai', 'waktu_habis']);

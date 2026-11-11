@@ -43,6 +43,12 @@ if (!$kuis) {
 $idMK = $kuis['id_mk'];
 $urlSlug = $kuis['kode_mk'] ?: $idMK;
 
+// Jika kuis menggunakan tautan eksternal (Google Forms dsb), langsung alihkan ke URL tersebut
+if (!empty($kuis['url_embed'])) {
+    header("Location: " . $kuis['url_embed']);
+    exit;
+}
+
 // Verifikasi enrollment jika bukan Dosen/Admin
 if (!is_dosen()) {
     $stmtEnr = $db->prepare("SELECT 1 FROM enrollment WHERE id_user = ? AND id_mk = ?");
