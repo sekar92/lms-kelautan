@@ -477,6 +477,34 @@ assert_test("v3.6: Pengaturan durasi timer kuis (45 menit) tersimpan di database
     !empty($kuisTimerCheck) && (int)$kuisTimerCheck['durasi_menit'] === 45
 );
 
+// Uji Filter Rekap Nilai: Kuis LMS masuk rekap, kuis link eksternal tidak masuk rekap
+$idKuisEksternal = generate_id('KNT', 'konten_mingguan', 'id_konten');
+$db->prepare("
+    INSERT INTO konten_mingguan (id_konten, id_mk, minggu_ke, tipe, judul, deskripsi, url_embed)
+    VALUES (?, 'MK-00001', 14, 'Kuis', 'Kuis Eksternal Google Forms', 'Kuis via tautan luar', 'https://forms.gle/testexternal123')
+")->execute([$idKuisEksternal]);
+
+$stmtRekapTest = $db->prepare("
+    SELECT id_konten, tipe, judul, url_embed
+    FROM konten_mingguan
+    WHERE id_mk = 'MK-00001'
+      AND (
+          tipe = 'Tugas' 
+          OR (tipe IN ('Kuis', 'Ujian') AND (url_embed IS NULL OR TRIM(url_embed) = ''))
+      )
+");
+$stmtRekapTest->execute();
+$rekapTasksList = $stmtRekapTest->fetchAll(PDO::FETCH_ASSOC);
+$taskIdsInRekap = array_column($rekapTasksList, 'id_konten');
+
+assert_test("v3.6.3: Kuis internal LMS masuk ke dalam daftar Rekap Nilai",
+    in_array($idKontenKuis, $taskIdsInRekap, true)
+);
+
+assert_test("v3.6.3: Kuis tautan eksternal TIDAK masuk ke dalam daftar Rekap Nilai",
+    !in_array($idKuisEksternal, $taskIdsInRekap, true)
+);
+
 // Kembalikan session ke admin
 unset($_SESSION['impersonator']);
 $_SESSION['user_id'] = 'USR-00001';

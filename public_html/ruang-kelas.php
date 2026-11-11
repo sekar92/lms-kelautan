@@ -380,11 +380,15 @@ if ($tab === 'pertemuan') {
         };
     });
 } elseif ($tab === 'rekap') {
-    // Ambil seluruh tugas perkuliahan untuk kelas ini
+    // Ambil seluruh tugas perkuliahan & kuis internal LMS (bukan kuis link eksternal) untuk kelas ini
     $stmtTasks = $db->prepare("
         SELECT id_konten, minggu_ke, tipe, judul, deadline
         FROM konten_mingguan
-        WHERE id_mk = ? AND tipe = 'Tugas'
+        WHERE id_mk = ? 
+          AND (
+              tipe = 'Tugas' 
+              OR (tipe IN ('Kuis', 'Ujian') AND (url_embed IS NULL OR TRIM(url_embed) = ''))
+          )
         ORDER BY minggu_ke ASC, created_at ASC
     ");
     $stmtTasks->execute([$idMK]);
@@ -401,12 +405,16 @@ if ($tab === 'pertemuan') {
     $stmtEnrolledMhs->execute([$idMK]);
     $rekapStudents = $stmtEnrolledMhs->fetchAll(PDO::FETCH_ASSOC);
 
-    // Ambil seluruh submission nilai tugas kelas ini
+    // Ambil seluruh submission nilai tugas & kuis LMS kelas ini
     $stmtSubmissions = $db->prepare("
         SELECT pt.id_user, pt.id_konten, pt.nilai, pt.waktu_submit, pt.file_name, pt.link_eksternal
         FROM pengumpulan_tugas pt
         JOIN konten_mingguan km ON pt.id_konten = km.id_konten
-        WHERE km.id_mk = ? AND km.tipe = 'Tugas'
+        WHERE km.id_mk = ? 
+          AND (
+              km.tipe = 'Tugas' 
+              OR (km.tipe IN ('Kuis', 'Ujian') AND (km.url_embed IS NULL OR TRIM(km.url_embed) = ''))
+          )
     ");
     $stmtSubmissions->execute([$idMK]);
     $allSubs = $stmtSubmissions->fetchAll(PDO::FETCH_ASSOC);
@@ -419,7 +427,37 @@ if ($tab === 'pertemuan') {
             'waktu_submit' => $s['waktu_submit'],
             'file_name'    => $s['file_name'],
             'link'         => $s['link_eksternal'],
+            'status_kuis'  => null,
         ];
+    }
+
+    // Lengkapi dengan data sesi kuis LMS jika ada
+    $stmtQuizSessions = $db->prepare("
+        SELECT ks.id_user, ks.id_konten, ks.total_nilai, ks.waktu_selesai, ks.status
+        FROM kuis_sesi ks
+        JOIN konten_mingguan km ON ks.id_konten = km.id_konten
+        WHERE km.id_mk = ? 
+          AND km.tipe IN ('Kuis', 'Ujian') 
+          AND (km.url_embed IS NULL OR TRIM(km.url_embed) = '')
+    ");
+    $stmtQuizSessions->execute([$idMK]);
+    $allQuizSessions = $stmtQuizSessions->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($allQuizSessions as $qs) {
+        if (!isset($rekapMatrix[$qs['id_user']][$qs['id_konten']])) {
+            $rekapMatrix[$qs['id_user']][$qs['id_konten']] = [
+                'nilai'        => $qs['total_nilai'],
+                'waktu_submit' => $qs['waktu_selesai'],
+                'file_name'    => 'Kuis LMS Interaktif',
+                'link'         => null,
+                'status_kuis'  => $qs['status'],
+            ];
+        } else {
+            $rekapMatrix[$qs['id_user']][$qs['id_konten']]['status_kuis'] = $qs['status'];
+            if ($rekapMatrix[$qs['id_user']][$qs['id_konten']]['nilai'] === null && $qs['total_nilai'] !== null) {
+                $rekapMatrix[$qs['id_user']][$qs['id_konten']]['nilai'] = $qs['total_nilai'];
+            }
+        }
     }
 
     // EXPORT REKAP KE CSV / EXCEL
@@ -434,11 +472,13 @@ if ($tab === 'pertemuan') {
         $delimiter = (isset($_GET['delim']) && $_GET['delim'] === 'comma') ? ',' : ';';
         $decimalSep = ($delimiter === ';') ? ',' : '.';
 
-        // 1. Ekspor Per Tugas Tertentu
+        // 1. Ekspor Per Tugas / Kuis Tertentu
         if ($selectedTaskId !== '' && isset($taskMap[$selectedTaskId])) {
             $currT = $taskMap[$selectedTaskId];
             $cleanTitle = sanitize_filename($currT['judul']);
-            $filename = "Rekap_Nilai_{$course['kode_mk']}_M{$currT['minggu_ke']}_{$cleanTitle}_" . date('Ymd_His') . ".csv";
+            $isKuisItem = in_array($currT['tipe'], ['Kuis', 'Ujian'], true);
+            $typeLabel = $isKuisItem ? "Kuis" : "Tugas";
+            $filename = "Rekap_Nilai_{$course['kode_mk']}_M{$currT['minggu_ke']}_{$typeLabel}_{$cleanTitle}_" . date('Ymd_His') . ".csv";
 
             header('Content-Type: text/csv; charset=UTF-8');
             header('Content-Disposition: attachment; filename="' . $filename . '"');
@@ -448,11 +488,12 @@ if ($tab === 'pertemuan') {
             // Petunjuk pemisah bagi Excel otomatis
             fputcsv($out, ["sep={$delimiter}"], $delimiter, '"', "\\");
 
-            fputcsv($out, ['LAPORAN REKAPITULASI NILAI TUGAS PERTEMUAN'], $delimiter, '"', "\\");
+            fputcsv($out, ['LAPORAN REKAPITULASI NILAI ' . strtoupper($typeLabel) . ' PERTEMUAN'], $delimiter, '"', "\\");
             fputcsv($out, ['Mata Kuliah', $course['nama_mk'] . ' (' . $course['kode_mk'] . ')'], $delimiter, '"', "\\");
             fputcsv($out, ['Semester / SKS', 'Semester ' . $course['semester'] . ' / ' . $course['sks'] . ' SKS'], $delimiter, '"', "\\");
             fputcsv($out, ['Alokasi Pertemuan', 'Minggu ke-' . $currT['minggu_ke']], $delimiter, '"', "\\");
-            fputcsv($out, ['Judul Tugas', $currT['judul']], $delimiter, '"', "\\");
+            fputcsv($out, ['Tipe Komponen', $currT['tipe'] . ($isKuisItem ? ' (Bank Soal LMS)' : '')], $delimiter, '"', "\\");
+            fputcsv($out, ['Judul Evaluasi', $currT['judul']], $delimiter, '"', "\\");
             fputcsv($out, ['Tenggat Waktu', $currT['deadline'] ? date('d/m/Y H:i', strtotime($currT['deadline'])) . ' WIT' : 'Tidak ada batas waktu'], $delimiter, '"', "\\");
             fputcsv($out, ['Total Peserta', count($rekapStudents)], $delimiter, '"', "\\");
             fputcsv($out, ['Waktu Ekspor', date('d/m/Y H:i:s') . ' WIT'], $delimiter, '"', "\\");
@@ -463,24 +504,35 @@ if ($tab === 'pertemuan') {
                 'NIM',
                 'Nama Mahasiswa',
                 'Angkatan',
-                'Status Pengumpulan',
+                'Status Pengerjaan',
                 'Nilai (0-100)',
-                'Waktu Pengumpulan',
-                'Nama Berkas Unggahan',
-                'Tautan Eksternal (Google Drive / Cloud)'
+                'Waktu Submit / Selesai',
+                'Keterangan / Berkas Unggahan',
+                'Tautan Eksternal'
             ], $delimiter, '"', "\\");
 
             $no = 1;
             foreach ($rekapStudents as $st) {
                 $subData = $rekapMatrix[$st['id_user']][$selectedTaskId] ?? null;
-                $statusKumpul = 'Belum Mengumpulkan';
+                $statusKumpul = 'Belum Mengerjakan';
                 $scoreStr = '-';
                 $waktuStr = '-';
                 $fileStr = '-';
                 $linkStr = '-';
 
                 if ($subData) {
-                    $statusKumpul = ($subData['nilai'] !== null) ? 'Sudah Dinilai' : 'Sudah Kumpul (Menunggu Penilaian)';
+                    if ($isKuisItem) {
+                        $stKuis = $subData['status_kuis'] ?? '';
+                        if ($subData['nilai'] !== null) {
+                            $statusKumpul = 'Sudah Selesai';
+                        } elseif ($stKuis === 'sedang_mengerjakan') {
+                            $statusKumpul = 'Sedang Mengerjakan';
+                        } else {
+                            $statusKumpul = 'Selesai (Menunggu Penilaian Essay)';
+                        }
+                    } else {
+                        $statusKumpul = ($subData['nilai'] !== null) ? 'Sudah Dinilai' : 'Sudah Kumpul (Menunggu Penilaian)';
+                    }
                     $scoreStr = ($subData['nilai'] !== null) ? number_format((float)$subData['nilai'], 1, $decimalSep, '') : '-';
                     $waktuStr = !empty($subData['waktu_submit']) ? date('d/m/Y H:i', strtotime($subData['waktu_submit'])) . ' WIT' : '-';
                     $fileStr = !empty($subData['file_name']) ? $subData['file_name'] : '-';
@@ -504,7 +556,7 @@ if ($tab === 'pertemuan') {
             exit;
         }
 
-        // 2. Ekspor Seluruh Nilai Tugas (Semester Lengkap 16 Minggu)
+        // 2. Ekspor Seluruh Nilai Tugas & Kuis LMS (Semester Lengkap 16 Minggu)
         $filename = "Rekap_Nilai_Lengkap_{$course['kode_mk']}_" . date('Ymd_His') . ".csv";
 
         header('Content-Type: text/csv; charset=UTF-8');
@@ -515,21 +567,22 @@ if ($tab === 'pertemuan') {
         // Petunjuk pemisah bagi Excel otomatis
         fputcsv($out, ["sep={$delimiter}"], $delimiter, '"', "\\");
 
-        fputcsv($out, ['LAPORAN REKAPITULASI NILAI TUGAS KELAS (LENGKAP 16 MINGGU)'], $delimiter, '"', "\\");
+        fputcsv($out, ['LAPORAN REKAPITULASI NILAI TUGAS & KUIS KELAS (LENGKAP 16 MINGGU)'], $delimiter, '"', "\\");
         fputcsv($out, ['Mata Kuliah', $course['nama_mk'] . ' (' . $course['kode_mk'] . ')'], $delimiter, '"', "\\");
         fputcsv($out, ['Tahun Akademik', $course['nama_ta'] ?? '-'], $delimiter, '"', "\\");
         fputcsv($out, ['Semester / SKS', 'Semester ' . $course['semester'] . ' / ' . $course['sks'] . ' SKS'], $delimiter, '"', "\\");
         fputcsv($out, ['Total Mahasiswa', count($rekapStudents)], $delimiter, '"', "\\");
-        fputcsv($out, ['Total Tugas', count($rekapTasks)], $delimiter, '"', "\\");
+        fputcsv($out, ['Total Tugas & Kuis LMS', count($rekapTasks)], $delimiter, '"', "\\");
         fputcsv($out, ['Waktu Ekspor', date('d/m/Y H:i:s') . ' WIT'], $delimiter, '"', "\\");
         fputcsv($out, [], $delimiter, '"', "\\"); // Baris kosong pembatas
 
         // Header Tabel
         $headerCols = ['No', 'NIM', 'Nama Mahasiswa', 'Angkatan'];
         foreach ($rekapTasks as $t) {
-            $headerCols[] = "M{$t['minggu_ke']}: " . $t['judul'];
+            $prefix = in_array($t['tipe'], ['Kuis', 'Ujian'], true) ? "[Kuis] " : "[Tugas] ";
+            $headerCols[] = "{$prefix}M{$t['minggu_ke']}: " . $t['judul'];
         }
-        $headerCols[] = 'Tugas Selesai';
+        $headerCols[] = 'Evaluasi Selesai';
         $headerCols[] = 'Rata-rata Nilai';
         fputcsv($out, $headerCols, $delimiter, '"', "\\");
 
@@ -551,7 +604,7 @@ if ($tab === 'pertemuan') {
                     $scores[] = (float)$subData['nilai'];
                     $completedCount++;
                 } elseif ($subData) {
-                    $row[] = 'Kumpul (Belum Dinilai)';
+                    $row[] = in_array($t['tipe'], ['Kuis', 'Ujian'], true) ? 'Mengerjakan / Koreksi' : 'Kumpul (Belum Dinilai)';
                     $completedCount++;
                 } else {
                     $row[] = '-';
@@ -1680,7 +1733,7 @@ require_once __DIR__ . '/../includes/navbar.php';
         </script>
     <?php endif; ?>
 
-    <!-- TAB 4: REKAP NILAI TUGAS (KHUSUS DOSEN) -->
+    <!-- TAB 4: REKAP NILAI TUGAS & KUIS (KHUSUS DOSEN) -->
     <?php if ($tab === 'rekap' && $isDosen): ?>
         <div class="space-y-6">
             
@@ -1688,10 +1741,10 @@ require_once __DIR__ . '/../includes/navbar.php';
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h2 class="text-xl font-bold text-abyssal-900 font-heading">
-                        Rekapitulasi Nilai Tugas Mahasiswa
+                        Rekapitulasi Nilai Tugas & Kuis Mahasiswa
                     </h2>
                     <p class="text-xs text-slate-500">
-                        Pantau seluruh capaian pengumpulan tugas mingguan, nilai angka, rata-rata kelas, dan ekspor ke format CSV / Excel.
+                        Pantau seluruh capaian tugas mingguan dan kuis daring LMS, nilai angka, rata-rata kelas, dan ekspor ke format CSV / Excel.
                     </p>
                 </div>
 
@@ -1724,13 +1777,13 @@ require_once __DIR__ . '/../includes/navbar.php';
                 </div>
 
                 <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs">
-                    <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Tugas Perkuliahan</p>
+                    <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Tugas & Kuis LMS</p>
                     <p class="text-2xl font-bold text-cyan-600 font-heading mt-1"><?= count($rekapTasks) ?></p>
-                    <p class="text-[11px] text-slate-400">Pertemuan penugasan</p>
+                    <p class="text-[11px] text-slate-400">Pertemuan evaluasi</p>
                 </div>
 
                 <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs">
-                    <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Tugas Telah Dikumpul</p>
+                    <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Evaluasi Selesai</p>
                     <?php
                     $totalSubmittedCount = 0;
                     foreach ($rekapStudents as $st) {
@@ -1742,7 +1795,7 @@ require_once __DIR__ . '/../includes/navbar.php';
                     }
                     ?>
                     <p class="text-2xl font-bold text-blue-600 font-heading mt-1"><?= $totalSubmittedCount ?></p>
-                    <p class="text-[11px] text-slate-400">Total berkas jawaban</p>
+                    <p class="text-[11px] text-slate-400">Total tugas & kuis masuk</p>
                 </div>
 
                 <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs">
@@ -1764,7 +1817,7 @@ require_once __DIR__ . '/../includes/navbar.php';
                 </div>
             </div>
 
-            <!-- Panel Unduh Per Pertemuan Tugas -->
+            <!-- Panel Unduh Per Pertemuan Tugas & Kuis -->
             <?php if (!empty($rekapTasks)): ?>
                 <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm space-y-3">
                     <div class="flex items-center space-x-2 pb-2 border-b border-slate-100">
@@ -1775,10 +1828,15 @@ require_once __DIR__ . '/../includes/navbar.php';
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
                         <?php foreach ($rekapTasks as $t): ?>
+                            <?php 
+                            $isKuis = in_array($t['tipe'], ['Kuis', 'Ujian'], true);
+                            $badgeClass = $isKuis ? 'bg-purple-100 text-purple-800' : 'bg-amber-100 text-amber-800';
+                            $badgePrefix = $isKuis ? 'Kuis M' : 'Tugas M';
+                            ?>
                             <a href="/kelas/<?= urlencode($urlSlug) ?>/rekap?export=csv&task_id=<?= urlencode($t['id_konten']) ?>" 
                                class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-50 hover:bg-cyan-50 text-slate-700 hover:text-cyan-800 border border-slate-200 hover:border-cyan-300 transition shadow-2xs"
                                title="Unduh Rekap CSV Minggu ke-<?= $t['minggu_ke'] ?>: <?= htmlspecialchars($t['judul']) ?>">
-                                <span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold text-[10px]">M<?= $t['minggu_ke'] ?></span>
+                                <span class="px-1.5 py-0.5 rounded <?= $badgeClass ?> font-bold text-[10px]"><?= $badgePrefix ?><?= $t['minggu_ke'] ?></span>
                                 <span class="truncate max-w-[180px]"><?= htmlspecialchars($t['judul']) ?></span>
                                 <i data-lucide="download" class="w-3.5 h-3.5 text-slate-400"></i>
                             </a>
@@ -1797,8 +1855,8 @@ require_once __DIR__ . '/../includes/navbar.php';
                 <?php elseif (empty($rekapTasks)): ?>
                     <div class="py-12 text-center text-slate-400">
                         <i data-lucide="clipboard-x" class="w-10 h-10 mx-auto stroke-1 mb-2"></i>
-                        <p class="text-sm font-semibold text-slate-600">Belum ada tugas pada alur 16 minggu perkuliahan ini.</p>
-                        <p class="text-xs text-slate-400 mt-1">Tambahkan komponen tipe "Tugas" pada tab 16 Minggu Perkuliahan untuk memulai pengumpulan dan penilaian tugas.</p>
+                        <p class="text-sm font-semibold text-slate-600">Belum ada tugas atau kuis interaktif LMS pada alur 16 minggu perkuliahan ini.</p>
+                        <p class="text-xs text-slate-400 mt-1">Tambahkan komponen tipe "Tugas" atau "Kuis" (dengan Bank Soal LMS) pada tab 16 Minggu Perkuliahan untuk memulai penilaian.</p>
                     </div>
                 <?php else: ?>
                     <div class="overflow-x-auto">
@@ -1810,14 +1868,21 @@ require_once __DIR__ . '/../includes/navbar.php';
                                     <th class="py-3.5 px-4 min-w-[200px] sticky left-[168px] bg-slate-50 z-10 border-r border-slate-200 shadow-xs">Nama Mahasiswa</th>
                                     <th class="py-3.5 px-3 text-center min-w-[70px]">Angkatan</th>
                                     
-                                    <!-- Kolom Dinamis Setiap Pertemuan yang Ada Tugas -->
+                                    <!-- Kolom Dinamis Setiap Pertemuan yang Ada Tugas / Kuis LMS -->
                                     <?php foreach ($rekapTasks as $t): ?>
+                                        <?php 
+                                        $isKuis = in_array($t['tipe'], ['Kuis', 'Ujian'], true);
+                                        $nilaiLink = $isKuis ? "/kuis/nilai/" . urlencode($t['id_konten']) : "/nilai/" . urlencode($t['id_konten']);
+                                        $badgeClass = $isKuis ? "bg-purple-100 text-purple-800 hover:bg-purple-200" : "bg-amber-100 text-amber-800 hover:bg-amber-200";
+                                        $badgeText = ($isKuis ? "Kuis M" : "Tugas M") . $t['minggu_ke'];
+                                        ?>
                                         <th class="py-3.5 px-4 text-center min-w-[140px] border-l border-slate-200">
                                             <div class="flex flex-col items-center">
-                                                <a href="/nilai/<?= urlencode($t['id_konten']) ?>" 
-                                                   class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 hover:bg-amber-200 transition mb-1" 
-                                                   title="Buka Lembar Penilaian">
-                                                    Minggu ke-<?= $t['minggu_ke'] ?>
+                                                <a href="<?= $nilaiLink ?>" 
+                                                   class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-bold <?= $badgeClass ?> transition mb-1" 
+                                                   title="<?= $isKuis ? 'Buka Hasil & Koreksi Kuis' : 'Buka Lembar Penilaian Tugas' ?>">
+                                                    <i data-lucide="<?= $isKuis ? 'help-circle' : 'file-text' ?>" class="w-3 h-3"></i>
+                                                    <span><?= $badgeText ?></span>
                                                 </a>
                                                 <span class="truncate max-w-[130px] font-bold text-slate-800 normal-case" title="<?= htmlspecialchars($t['judul']) ?>">
                                                     <?= htmlspecialchars($t['judul']) ?>
@@ -1826,7 +1891,7 @@ require_once __DIR__ . '/../includes/navbar.php';
                                         </th>
                                     <?php endforeach; ?>
 
-                                    <th class="py-3.5 px-4 text-center min-w-[100px] border-l border-slate-200 bg-slate-100/60">Tugas Selesai</th>
+                                    <th class="py-3.5 px-4 text-center min-w-[100px] border-l border-slate-200 bg-slate-100/60">Evaluasi Selesai</th>
                                     <th class="py-3.5 px-4 text-center min-w-[110px] border-l border-slate-200 bg-slate-100/80 font-bold text-slate-900">Rata-rata Nilai</th>
                                 </tr>
                             </thead>
@@ -1848,7 +1913,7 @@ require_once __DIR__ . '/../includes/navbar.php';
                                             <?= htmlspecialchars($st['angkatan'] ?? '-') ?>
                                         </td>
 
-                                        <!-- Nilai Per Tugas -->
+                                        <!-- Nilai Per Tugas / Kuis -->
                                         <?php
                                         $mhsScores = [];
                                         $mhsCompletedCount = 0;
@@ -1856,10 +1921,11 @@ require_once __DIR__ . '/../includes/navbar.php';
                                         <?php foreach ($rekapTasks as $t): ?>
                                             <?php 
                                             $sub = $rekapMatrix[$st['id_user']][$t['id_konten']] ?? null;
+                                            $isKuis = in_array($t['tipe'], ['Kuis', 'Ujian'], true);
                                             ?>
                                             <td class="py-3 px-4 text-center border-l border-slate-100">
                                                 <?php if (!$sub): ?>
-                                                    <span class="inline-block text-slate-300 font-mono" title="Belum mengumpulkan">-</span>
+                                                    <span class="inline-block text-slate-300 font-mono" title="Belum mengumpulkan / mengerjakan">-</span>
                                                 <?php elseif ($sub['nilai'] !== null): ?>
                                                     <?php 
                                                     $valScore = (float)$sub['nilai'];
@@ -1872,15 +1938,27 @@ require_once __DIR__ . '/../includes/navbar.php';
                                                     </span>
                                                 <?php else: ?>
                                                     <?php $mhsCompletedCount++; ?>
-                                                    <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-cyan-50 text-cyan-800 border border-cyan-200" title="Sudah kumpul, menunggu penilaian dosen">
-                                                        <i data-lucide="clock" class="w-3 h-3 text-cyan-600"></i>
-                                                        <span>Kumpul</span>
-                                                    </span>
+                                                    <?php if ($isKuis && ($sub['status_kuis'] ?? '') === 'sedang_mengerjakan'): ?>
+                                                        <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200" title="Mahasiswa sedang mengerjakan kuis">
+                                                            <i data-lucide="clock" class="w-3 h-3 text-amber-600"></i>
+                                                            <span>Mengerjakan</span>
+                                                        </span>
+                                                    <?php elseif ($isKuis): ?>
+                                                        <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-50 text-purple-800 border border-purple-200" title="Selesai, butuh koreksi essay">
+                                                            <i data-lucide="edit-3" class="w-3 h-3 text-purple-600"></i>
+                                                            <span>Koreksi Essay</span>
+                                                        </span>
+                                                    <?php else: ?>
+                                                        <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-cyan-50 text-cyan-800 border border-cyan-200" title="Sudah kumpul, menunggu penilaian dosen">
+                                                            <i data-lucide="clock" class="w-3 h-3 text-cyan-600"></i>
+                                                            <span>Kumpul</span>
+                                                        </span>
+                                                    <?php endif; ?>
                                                 <?php endif; ?>
                                             </td>
                                         <?php endforeach; ?>
 
-                                        <!-- Total Tugas Selesai -->
+                                        <!-- Total Evaluasi Selesai -->
                                         <td class="py-3 px-4 text-center border-l border-slate-200 bg-slate-50/40">
                                             <span class="font-bold <?= $mhsCompletedCount === count($rekapTasks) ? 'text-emerald-700' : 'text-slate-700' ?>">
                                                 <?= $mhsCompletedCount ?> / <?= count($rekapTasks) ?>

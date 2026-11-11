@@ -113,8 +113,16 @@
    - Dosen membuka lembar jawaban mahasiswa, melihat perolehan butir objektif, dan memberikan nilai pada butir essay (0 s/d bobot maksimal) beserta catatan evaluasi spesifik.
    - Menghitung ulang skor skala 0 - 100 secara instan dan menyimpan feedback umum ke riwayat mahasiswa.
 
-### 2.5 Integrasi Otomatis ke Rekap Nilai & Ekspor CSV/Excel
-1. Setiap sesi kuis yang telah selesai disinkronkan ke tabel `pengumpulan_tugas`, sehingga nilai kuis otomatis tercantum di tab **Rekap Nilai Perkuliahan**, matriks 16 minggu, serta ikut terunduh dalam berkas CSV/Excel.
+### 2.5 Integrasi Otomatis Rekap Nilai Kuis LMS ke Transkrip & Ekspor CSV/Excel
+1. **Penyatuan Evaluasi Tugas & Kuis LMS**:
+   - Tab Rekap Nilai di Ruang Kelas (`/kelas/{kode_mk}/rekap`) dan Pusat Rekap Nilai (`/rekap-nilai`) kini secara otomatis menggabungkan seluruh komponen **Tugas** dan **Kuis Bank Soal LMS** ke dalam matriks transkrip perkuliahan 16 minggu.
+2. **Eksklusi Tepat Sasaran Kuis Eksternal**:
+   - Kuis atau ujian yang menggunakan tautan eksternal (`!empty($url_embed)` seperti Google Forms atau Quizizz) **dikecualikan** dari rekapitulasi nilai tugas & kuis, karena nilai dan pengerjaannya berada di luar basis data internal LMS.
+3. **Penyajian Matriks yang Informatif**:
+   - Kolom kuis ditandai dengan badge ungu (*Kuis M13*) lengkap dengan tautan langsung ke lembar nilai & koreksi kuis (`/kuis/nilai/{id}`).
+   - Kolom tugas ditandai dengan badge amber (*Tugas M3*) dengan tautan ke lembar penilaian tugas (`/nilai/{id}`).
+   - Status pengerjaan kuis menampilkan indikator: *Mengerjakan*, *Koreksi Essay*, atau nilai angka berskala 0 - 100 dengan gradien warna.
+   - Ekspor berkas CSV/Excel secara rapi membedakan label kolom evaluasi: `[Kuis] M13: Judul Kuis` dan `[Tugas] M3: Judul Tugas`.
 
 ### 2.6 Pengaturan Durasi Timer Kuis Interaktif
 1. **Fleksibilitas Durasi Timer**:

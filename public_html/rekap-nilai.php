@@ -23,7 +23,10 @@ if (is_dosen_admin()) {
     $stmtCourses = $db->query("
         SELECT mk.*, ta.nama_ta, ta.status AS ta_status,
                (SELECT COUNT(*) FROM enrollment WHERE id_mk = mk.id_mk) AS total_peserta,
-               (SELECT COUNT(*) FROM konten_mingguan WHERE id_mk = mk.id_mk AND tipe = 'Tugas') AS total_tugas
+               (SELECT COUNT(*) FROM konten_mingguan 
+                WHERE id_mk = mk.id_mk 
+                  AND (tipe = 'Tugas' OR (tipe IN ('Kuis', 'Ujian') AND (url_embed IS NULL OR TRIM(url_embed) = '')))
+               ) AS total_tugas
         FROM mata_kuliah mk
         LEFT JOIN tahun_akademik ta ON mk.id_ta = ta.id_ta
         ORDER BY mk.created_at DESC
@@ -32,7 +35,10 @@ if (is_dosen_admin()) {
     $stmtCourses = $db->prepare("
         SELECT DISTINCT mk.*, ta.nama_ta, ta.status AS ta_status,
                (SELECT COUNT(*) FROM enrollment WHERE id_mk = mk.id_mk) AS total_peserta,
-               (SELECT COUNT(*) FROM konten_mingguan WHERE id_mk = mk.id_mk AND tipe = 'Tugas') AS total_tugas
+               (SELECT COUNT(*) FROM konten_mingguan 
+                WHERE id_mk = mk.id_mk 
+                  AND (tipe = 'Tugas' OR (tipe IN ('Kuis', 'Ujian') AND (url_embed IS NULL OR TRIM(url_embed) = '')))
+               ) AS total_tugas
         FROM mata_kuliah mk
         LEFT JOIN tahun_akademik ta ON mk.id_ta = ta.id_ta
         LEFT JOIN dosen_mata_kuliah dmk ON dmk.id_mk = mk.id_mk
@@ -61,7 +67,7 @@ require_once __DIR__ . '/../includes/navbar.php';
                 Pusat Rekap Nilai Perkuliahan
             </h1>
             <p class="text-sm text-slate-500 max-w-2xl mt-1">
-                Pilih mata kuliah untuk melihat matriks rekapitulasi nilai tugas mahasiswa per pertemuan dan mengunduh berkas rekapitulasi dalam format CSV / Excel.
+                Pilih mata kuliah untuk melihat matriks rekapitulasi nilai tugas dan kuis interaktif LMS mahasiswa per pertemuan serta mengunduh berkas rekapitulasi dalam format CSV / Excel.
             </p>
         </div>
     </div>
@@ -109,8 +115,8 @@ require_once __DIR__ . '/../includes/navbar.php';
                                 <span class="font-bold text-slate-800 font-heading text-sm"><?= (int)$c['total_peserta'] ?> Peserta</span>
                             </div>
                             <div class="p-2.5 rounded-xl bg-slate-50">
-                                <span class="text-slate-400 block text-[10px] uppercase font-semibold">Tugas Aktif</span>
-                                <span class="font-bold text-cyan-700 font-heading text-sm"><?= (int)$c['total_tugas'] ?> Tugas</span>
+                                <span class="text-slate-400 block text-[10px] uppercase font-semibold">Tugas & Kuis LMS</span>
+                                <span class="font-bold text-cyan-700 font-heading text-sm"><?= (int)$c['total_tugas'] ?> Item</span>
                             </div>
                         </div>
                     </div>
