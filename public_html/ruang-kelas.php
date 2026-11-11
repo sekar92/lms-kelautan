@@ -2047,6 +2047,34 @@ require_once __DIR__ . '/../includes/navbar.php';
                         </p>
                     </div>
 
+                    <!-- Baris 7: Durasi Pengerjaan Timer Kuis (Menit) -->
+                    <div id="group_durasi" class="hidden">
+                        <label for="modal_durasi" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1 flex items-center justify-between">
+                            <span class="flex items-center gap-1.5">
+                                <i data-lucide="timer" class="w-3.5 h-3.5 text-amber-500"></i>
+                                <span>Durasi Pengerjaan Timer (Menit)</span>
+                            </span>
+                            <span class="text-[10px] text-slate-400 font-normal lowercase">(opsional / kosongkan jika tanpa batas)</span>
+                        </label>
+                        <div class="relative">
+                            <input id="modal_durasi" name="durasi_menit" type="number" min="1" max="600" placeholder="Contoh: 60 (untuk 60 menit / 1 jam)"
+                                   class="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-ocean-cyan focus:bg-white transition pr-16">
+                            <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 pointer-events-none">Menit</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 mt-1.5">
+                            <span class="text-[11px] text-slate-400">Pilihan cepat:</span>
+                            <button type="button" onclick="document.getElementById('modal_durasi').value=15" class="px-2 py-0.5 text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-medium transition">15m</button>
+                            <button type="button" onclick="document.getElementById('modal_durasi').value=30" class="px-2 py-0.5 text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-medium transition">30m</button>
+                            <button type="button" onclick="document.getElementById('modal_durasi').value=45" class="px-2 py-0.5 text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-medium transition">45m</button>
+                            <button type="button" onclick="document.getElementById('modal_durasi').value=60" class="px-2 py-0.5 text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-medium transition">60m</button>
+                            <button type="button" onclick="document.getElementById('modal_durasi').value=90" class="px-2 py-0.5 text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-medium transition">90m</button>
+                            <button type="button" onclick="document.getElementById('modal_durasi').value=''" class="px-2 py-0.5 text-[10px] bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-md font-medium transition">Tanpa Timer</button>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-1">
+                            Timer hitung mundur aktif di lembar mahasiswa. Saat waktu habis, jawaban otomatis tersubmit.
+                        </p>
+                    </div>
+
                     <div class="pt-2 flex items-center justify-end space-x-2 border-t border-slate-100">
                         <button type="button" onclick="closeAddContentModal()"
                                 class="px-4 py-2 text-xs font-semibold rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 transition">
@@ -2214,6 +2242,34 @@ require_once __DIR__ . '/../includes/navbar.php';
                     </p>
                 </div>
 
+                <!-- Baris 7: Durasi Pengerjaan Timer Kuis (Menit) -->
+                <div id="edit_group_durasi" class="hidden">
+                    <label for="edit_modal_durasi" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1 flex items-center justify-between">
+                        <span class="flex items-center gap-1.5">
+                            <i data-lucide="timer" class="w-3.5 h-3.5 text-amber-500"></i>
+                            <span>Durasi Pengerjaan Timer (Menit)</span>
+                        </span>
+                        <span class="text-[10px] text-slate-400 font-normal lowercase">(opsional / kosongkan jika tanpa batas)</span>
+                    </label>
+                    <div class="relative">
+                        <input id="edit_modal_durasi" name="durasi_menit" type="number" min="1" max="600" placeholder="Contoh: 60 (untuk 60 menit / 1 jam)"
+                               class="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-ocean-cyan focus:bg-white transition pr-16">
+                        <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 pointer-events-none">Menit</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 mt-1.5">
+                        <span class="text-[11px] text-slate-400">Pilihan cepat:</span>
+                        <button type="button" onclick="document.getElementById('edit_modal_durasi').value=15" class="px-2 py-0.5 text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-medium transition">15m</button>
+                        <button type="button" onclick="document.getElementById('edit_modal_durasi').value=30" class="px-2 py-0.5 text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-medium transition">30m</button>
+                        <button type="button" onclick="document.getElementById('edit_modal_durasi').value=45" class="px-2 py-0.5 text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-medium transition">45m</button>
+                        <button type="button" onclick="document.getElementById('edit_modal_durasi').value=60" class="px-2 py-0.5 text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-medium transition">60m</button>
+                        <button type="button" onclick="document.getElementById('edit_modal_durasi').value=90" class="px-2 py-0.5 text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-medium transition">90m</button>
+                        <button type="button" onclick="document.getElementById('edit_modal_durasi').value=''" class="px-2 py-0.5 text-[10px] bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-md font-medium transition">Tanpa Timer</button>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1">
+                        Timer hitung mundur aktif di lembar mahasiswa. Saat waktu habis, jawaban otomatis tersubmit.
+                    </p>
+                </div>
+
                 <div class="pt-2 flex items-center justify-end space-x-2 border-t border-slate-100">
                     <button type="button" onclick="closeEditContentModal()"
                             class="px-4 py-2 text-xs font-semibold rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 transition">
@@ -2299,6 +2355,10 @@ require_once __DIR__ . '/../includes/navbar.php';
         if (selMinggu && minggu) {
             selMinggu.value = minggu;
         }
+        const inputDurasi = document.getElementById('modal_durasi');
+        if (inputDurasi) {
+            inputDurasi.value = '';
+        }
         if (modal) {
             modal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
@@ -2325,6 +2385,11 @@ require_once __DIR__ . '/../includes/navbar.php';
         document.getElementById('edit_modal_judul').value = item.judul || '';
         document.getElementById('edit_modal_deskripsi').value = item.deskripsi || '';
         document.getElementById('edit_modal_url').value = item.url_embed || '';
+
+        const inputDurasi = document.getElementById('edit_modal_durasi');
+        if (inputDurasi) {
+            inputDurasi.value = item.durasi_menit || '';
+        }
         
         // Reset file input & checkbox hapus file
         const fileInput = document.getElementById('edit_modal_file');
@@ -2405,6 +2470,7 @@ require_once __DIR__ . '/../includes/navbar.php';
         const groupFile = document.getElementById('group_file');
         const groupUrl = document.getElementById('group_url');
         const groupDeadline = document.getElementById('group_deadline');
+        const groupDurasi = document.getElementById('group_durasi');
         const labelUrl = document.getElementById('label_url');
         const inputUrl = document.getElementById('modal_url');
         const labelDeadline = document.getElementById('label_deadline');
@@ -2416,6 +2482,7 @@ require_once __DIR__ . '/../includes/navbar.php';
             if (groupFile) groupFile.classList.remove('hidden');
             if (groupUrl) groupUrl.classList.remove('hidden');
             if (groupDeadline) groupDeadline.classList.add('hidden');
+            if (groupDurasi) groupDurasi.classList.add('hidden');
             if (labelUrl) labelUrl.textContent = 'Link Eksternal (Opsional)';
             if (inputUrl) {
                 inputUrl.required = false;
@@ -2427,6 +2494,7 @@ require_once __DIR__ . '/../includes/navbar.php';
             if (groupFile) groupFile.classList.remove('hidden');
             if (groupUrl) groupUrl.classList.remove('hidden');
             if (groupDeadline) groupDeadline.classList.remove('hidden');
+            if (groupDurasi) groupDurasi.classList.add('hidden');
             if (labelDeadline) labelDeadline.textContent = 'Tenggat Waktu Pengumpulan (Deadline)';
             if (hintDeadline) hintDeadline.textContent = 'Batas akhir mahasiswa dapat mengumpulkan jawaban tugas berkas PDF.';
             if (labelUrl) labelUrl.textContent = 'Link Eksternal (Opsional)';
@@ -2442,6 +2510,7 @@ require_once __DIR__ . '/../includes/navbar.php';
             if (fileInput) fileInput.value = '';
             if (groupUrl) groupUrl.classList.remove('hidden');
             if (groupDeadline) groupDeadline.classList.remove('hidden');
+            if (groupDurasi) groupDurasi.classList.remove('hidden');
             if (labelDeadline) labelDeadline.textContent = tipe === 'Kuis' ? 'Tenggat Waktu Pengerjaan Kuis (Deadline)' : 'Tenggat Waktu Pelaksanaan Ujian (Deadline)';
             if (hintDeadline) hintDeadline.textContent = tipe === 'Kuis' ? 'Batas akhir waktu pengerjaan kuis daring bagi mahasiswa.' : 'Batas akhir waktu pelaksanaan ujian (UTS / UAS) bagi mahasiswa.';
             if (labelUrl) labelUrl.textContent = 'URL Kuis Eksternal (Opsional jika gunakan Bank Soal LMS)';
@@ -2459,6 +2528,7 @@ require_once __DIR__ . '/../includes/navbar.php';
         const groupFile = document.getElementById('edit_group_file');
         const groupUrl = document.getElementById('edit_group_url');
         const groupDeadline = document.getElementById('edit_group_deadline');
+        const groupDurasi = document.getElementById('edit_group_durasi');
         const labelUrl = document.getElementById('edit_label_url');
         const inputUrl = document.getElementById('edit_modal_url');
         const labelDeadline = document.getElementById('edit_label_deadline');
@@ -2470,6 +2540,7 @@ require_once __DIR__ . '/../includes/navbar.php';
             if (groupFile) groupFile.classList.remove('hidden');
             if (groupUrl) groupUrl.classList.remove('hidden');
             if (groupDeadline) groupDeadline.classList.add('hidden');
+            if (groupDurasi) groupDurasi.classList.add('hidden');
             if (labelUrl) labelUrl.textContent = 'Link Eksternal (Opsional)';
             if (inputUrl) {
                 inputUrl.required = false;
@@ -2481,6 +2552,7 @@ require_once __DIR__ . '/../includes/navbar.php';
             if (groupFile) groupFile.classList.remove('hidden');
             if (groupUrl) groupUrl.classList.remove('hidden');
             if (groupDeadline) groupDeadline.classList.remove('hidden');
+            if (groupDurasi) groupDurasi.classList.add('hidden');
             if (labelDeadline) labelDeadline.textContent = 'Tenggat Waktu Pengumpulan (Deadline)';
             if (hintDeadline) hintDeadline.textContent = 'Batas akhir mahasiswa dapat mengumpulkan jawaban tugas berkas PDF.';
             if (labelUrl) labelUrl.textContent = 'Link Eksternal (Opsional)';
@@ -2496,12 +2568,18 @@ require_once __DIR__ . '/../includes/navbar.php';
             if (fileInput) fileInput.value = '';
             if (groupUrl) groupUrl.classList.remove('hidden');
             if (groupDeadline) groupDeadline.classList.remove('hidden');
+            if (groupDurasi) groupDurasi.classList.remove('hidden');
             if (labelDeadline) labelDeadline.textContent = tipe === 'Kuis' ? 'Tenggat Waktu Pengerjaan Kuis (Deadline)' : 'Tenggat Waktu Pelaksanaan Ujian (Deadline)';
             if (hintDeadline) hintDeadline.textContent = tipe === 'Kuis' ? 'Batas akhir waktu pengerjaan kuis daring bagi mahasiswa.' : 'Batas akhir waktu pelaksanaan ujian (UTS / UAS) bagi mahasiswa.';
             if (labelUrl) labelUrl.textContent = 'URL Kuis Eksternal (Opsional jika gunakan Bank Soal LMS)';
             if (inputUrl) {
                 inputUrl.required = false;
                 inputUrl.placeholder = 'Kosongkan jika menggunakan Bank Soal LMS (atau isi https://forms.gle/...)';
+            }
+            if (hintUrl) hintUrl.textContent = 'Opsional: Kosongkan untuk menggunakan sistem Bank Soal & Kuis interaktif bawaan LMS Polikant.';
+            if (inputDeadline) inputDeadline.required = true;
+        }
+    }
             }
             if (hintUrl) hintUrl.textContent = 'Opsional: Kosongkan untuk menggunakan sistem Bank Soal & Kuis interaktif bawaan LMS Polikant.';
             if (inputDeadline) inputDeadline.required = true;

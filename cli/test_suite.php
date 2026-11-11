@@ -470,6 +470,13 @@ assert_test("v3.6: Koreksi essay oleh dosen memperbarui skor total menjadi 100",
     (float)$gradingFinal['skor_skala_100'] === 100.0 && $gradingFinal['perlu_koreksi'] === false
 );
 
+// Uji Pengaturan Durasi Timer Kuis
+$db->prepare("UPDATE konten_mingguan SET durasi_menit = 45 WHERE id_konten = ?")->execute([$idKontenKuis]);
+$kuisTimerCheck = $db->query("SELECT durasi_menit FROM konten_mingguan WHERE id_konten = '{$idKontenKuis}'")->fetch(PDO::FETCH_ASSOC);
+assert_test("v3.6: Pengaturan durasi timer kuis (45 menit) tersimpan di database",
+    !empty($kuisTimerCheck) && (int)$kuisTimerCheck['durasi_menit'] === 45
+);
+
 // Kembalikan session ke admin
 unset($_SESSION['impersonator']);
 $_SESSION['user_id'] = 'USR-00001';

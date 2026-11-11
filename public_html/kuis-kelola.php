@@ -151,6 +151,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: /kuis/kelola/{$idKonten}");
         exit;
     }
+
+    // 4. Update Durasi Pengerjaan Timer & Deadline Kuis
+    if ($action === 'update_pengaturan_kuis') {
+        $durasiInput = trim((string)($_POST['durasi_menit'] ?? ''));
+        $durasiMenit = ($durasiInput !== '' && is_numeric($durasiInput)) ? max(1, (int)$durasiInput) : null;
+        $deadlineInput = trim((string)($_POST['deadline'] ?? ''));
+        $deadline = ($deadlineInput !== '') ? $deadlineInput : null;
+
+        try {
+            $stmtUpdK = $db->prepare("UPDATE konten_mingguan SET durasi_menit = ?, deadline = ? WHERE id_konten = ?");
+            $stmtUpdK->execute([$durasiMenit, $deadline, $idKonten]);
+
+            $logDurasi = $durasiMenit !== null ? "{$durasiMenit} menit" : "tanpa batas waktu";
+            log_activity('UPDATE_PENGATURAN_KUIS', "Dosen '{$currentUser['nama']}' memperbarui durasi pengerjaan ({$logDurasi}) kuis '{$kuis['judul']}'.");
+            set_flash('success', 'Pengaturan durasi timer dan batas waktu kuis berhasil disimpan.');
+        } catch (Throwable $e) {
+            set_flash('error', 'Gagal memperbarui pengaturan kuis: ' . $e->getMessage());
+        }
+
+        header("Location: /kuis/kelola/{$idKonten}");
+        exit;
+    }
 }
 
 // -------------------------------------------------------------
@@ -285,31 +307,34 @@ require_once __DIR__ . '/../includes/navbar.php';
 
     <!-- Parameter Teknis Kuis -->
     <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div class="flex flex-wrap items-center gap-4 text-slate-700">
-            <span class="flex items-center space-x-1.5">
+        <div class="flex flex-wrap items-center gap-3 text-slate-700">
+            <span class="flex items-center space-x-1.5 bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200">
                 <i data-lucide="clock" class="w-4 h-4 text-maritime-700"></i>
-                <span>Durasi: <strong><?= !empty($kuis['durasi_menit']) ? (int)$kuis['durasi_menit'] . ' Menit' : 'Bebas (Tanpa Timer)' ?></strong></span>
+                <span>Durasi Timer: <strong><?= !empty($kuis['durasi_menit']) ? (int)$kuis['durasi_menit'] . ' Menit' : 'Bebas (Tanpa Timer)' ?></strong></span>
             </span>
-            <span class="flex items-center space-x-1.5">
+            <span class="flex items-center space-x-1.5 bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200">
                 <i data-lucide="calendar" class="w-4 h-4 text-maritime-700"></i>
                 <span>Tenggat Waktu: <strong><?= !empty($kuis['deadline']) ? date('d M Y, H:i', strtotime($kuis['deadline'])) . ' WIT' : 'Tidak Dibatasi' ?></strong></span>
             </span>
-            <span class="flex items-center space-x-1.5">
-                <i data-lucide="cpu" class="w-4 h-4 text-emerald-600"></i>
-                <span>Koreksi PG/BS/Isian: <strong>Otomatis 100%</strong></span>
-            </span>
-            <?php if ($countEssay > 0): ?>
-                <span class="flex items-center space-x-1.5 text-purple-700 font-semibold bg-purple-50 px-2 py-0.5 rounded-lg border border-purple-200">
-                    <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
-                    <span>Terdapat <?= $countEssay ?> butir essay (perlu koreksi dosen)</span>
-                </span>
-            <?php endif; ?>
+
+            <!-- Tombol Cepat Atur Durasi & Deadline -->
+            <button type="button" onclick="openDurasiModal()" 
+                    class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl font-bold text-xs bg-cyan-100 text-cyan-900 hover:bg-cyan-200 border border-cyan-300 transition shadow-2xs">
+                <i data-lucide="timer" class="w-3.5 h-3.5 text-cyan-700"></i>
+                <span>Atur Durasi & Deadline</span>
+            </button>
         </div>
 
-        <div>
+        <div class="flex items-center space-x-2">
+            <?php if ($countEssay > 0): ?>
+                <span class="hidden md:inline-flex items-center space-x-1.5 text-purple-700 font-semibold bg-purple-50 px-2.5 py-1.5 rounded-xl border border-purple-200 text-[11px]">
+                    <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
+                    <span><?= $countEssay ?> butir essay (koreksi manual)</span>
+                </span>
+            <?php endif; ?>
             <a href="/kuis/nilai/<?= urlencode($idKonten) ?>" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl font-semibold text-xs text-white bg-slate-800 hover:bg-slate-900 transition">
                 <i data-lucide="award" class="w-3.5 h-3.5 text-cyan-400"></i>
-                <span>Lihat Hasil & Koreksi Nilai Mahasiswa &rarr;</span>
+                <span>Hasil & Nilai Mahasiswa &rarr;</span>
             </a>
         </div>
     </div>
@@ -542,7 +567,92 @@ require_once __DIR__ . '/../includes/navbar.php';
     </div>
 </div>
 
+<!-- ============================================================= -->
+<!-- MODAL ATUR DURASI TIMER & DEADLINE KUIS                       -->
+<!-- ============================================================= -->
+<div id="modal-durasi" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
+        <form action="/kuis/kelola/<?= urlencode($idKonten) ?>" method="POST">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+            <input type="hidden" name="action" value="update_pengaturan_kuis">
+
+            <!-- Header Modal -->
+            <div class="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50/70">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-cyan-100 text-cyan-800 flex items-center justify-center font-bold">
+                        <i data-lucide="timer" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900 font-heading">Atur Durasi Timer & Deadline</h3>
+                        <p class="text-[11px] text-slate-500">Sesuaikan batas waktu pengerjaan untuk mahasiswa.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeDurasiModal()" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-5 space-y-4 text-xs">
+                <!-- Durasi Pengerjaan Timer -->
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Durasi Pengerjaan Timer (Menit)</label>
+                    <div class="relative">
+                        <input type="number" min="1" max="360" name="durasi_menit" id="input_durasi_menit" 
+                               value="<?= htmlspecialchars((string)($kuis['durasi_menit'] ?? '')) ?>" 
+                               placeholder="Contoh: 45 (atau kosongkan untuk tanpa batas waktu)"
+                               class="w-full pl-3.5 pr-14 py-2 text-xs rounded-xl border-slate-300 focus:border-cyan-500 focus:ring-cyan-500 bg-white">
+                        <span class="absolute right-3.5 top-2.5 text-xs font-bold text-slate-400">Menit</span>
+                    </div>
+                    <p class="text-[10px] text-slate-500 mt-1">Timer hitung mundur akan aktif di lembar mahasiswa. Saat waktu habis, jawaban otomatis diserahkan.</p>
+                    
+                    <!-- Tombol Cepat Pilihan Menit -->
+                    <div class="flex flex-wrap gap-1.5 pt-2">
+                        <span class="text-[10px] text-slate-400 self-center mr-1">Pilihan cepat:</span>
+                        <button type="button" onclick="setDurasi(15)" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 hover:bg-cyan-100 text-slate-700">15 Mnt</button>
+                        <button type="button" onclick="setDurasi(30)" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 hover:bg-cyan-100 text-slate-700">30 Mnt</button>
+                        <button type="button" onclick="setDurasi(45)" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 hover:bg-cyan-100 text-slate-700">45 Mnt</button>
+                        <button type="button" onclick="setDurasi(60)" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 hover:bg-cyan-100 text-slate-700">60 Mnt</button>
+                        <button type="button" onclick="setDurasi(90)" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 hover:bg-cyan-100 text-slate-700">90 Mnt</button>
+                        <button type="button" onclick="setDurasi('')" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700">Tanpa Timer</button>
+                    </div>
+                </div>
+
+                <!-- Tenggat Waktu (Deadline) -->
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Tenggat Waktu Akhir Pengerjaan (Deadline)</label>
+                    <input type="datetime-local" name="deadline" 
+                           value="<?= !empty($kuis['deadline']) ? date('Y-m-d\TH:i', strtotime($kuis['deadline'])) : '' ?>"
+                           class="w-full py-2 px-3 text-xs rounded-xl border-slate-300 focus:border-cyan-500 focus:ring-cyan-500 bg-white">
+                    <p class="text-[10px] text-slate-500 mt-1">Batas akhir kuis dapat dibuka dan dimulai oleh mahasiswa.</p>
+                </div>
+            </div>
+
+            <!-- Footer Modal -->
+            <div class="flex items-center justify-end space-x-2 p-4 border-t border-slate-100 bg-slate-50/70">
+                <button type="button" onclick="closeDurasiModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200 transition">
+                    Batal
+                </button>
+                <button type="submit" class="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-maritime-700 hover:bg-maritime-800 shadow-sm transition">
+                    Simpan Pengaturan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
+function openDurasiModal() {
+    document.getElementById('modal-durasi').classList.remove('hidden');
+}
+
+function closeDurasiModal() {
+    document.getElementById('modal-durasi').classList.add('hidden');
+}
+
+function setDurasi(val) {
+    document.getElementById('input_durasi_menit').value = val;
+}
+
 function openPickerModal() {
     document.getElementById('modal-picker').classList.remove('hidden');
 }
