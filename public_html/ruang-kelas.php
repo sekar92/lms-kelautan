@@ -2662,11 +2662,6 @@ require_once __DIR__ . '/../includes/navbar.php';
             if (inputDeadline) inputDeadline.required = true;
         }
     }
-            }
-            if (hintUrl) hintUrl.textContent = 'Opsional: Kosongkan untuk menggunakan sistem Bank Soal & Kuis interaktif bawaan LMS Polikant.';
-            if (inputDeadline) inputDeadline.required = true;
-        }
-    }
 
     document.addEventListener('DOMContentLoaded', () => {
         updateModalFields();
