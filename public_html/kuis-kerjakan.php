@@ -141,6 +141,13 @@ if (!$sesi) {
 
 $idSesi = $sesi['id_sesi'];
 
+// Proteksi Sesi Aktif: Tandai sesi sedang mengerjakan kuis agar terlindung dari idle logout
+if ($sesi['status'] === 'sedang_mengerjakan') {
+    $_SESSION['active_quiz_id'] = $idKonten;
+} else {
+    unset($_SESSION['active_quiz_id']);
+}
+
 // Hitung durasi dan sisa waktu
 $durasiMenit = !empty($kuis['durasi_menit']) ? (int)$kuis['durasi_menit'] : null;
 $sisaDetik = null;
@@ -225,6 +232,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             sync_kuis_ke_pengumpulan_tugas($db, $idKonten, $currentUser['id_user'], $nilaiAkhir, $feedbackNotice);
 
             $db->commit();
+
+            // Lepaskan proteksi kuis aktif setelah diserahkan
+            unset($_SESSION['active_quiz_id']);
 
             log_activity('SELESAI_KUIS', "Mahasiswa '{$currentUser['nama']}' menyerahkan kuis '{$kuis['judul']}' (Skor: {$nilaiAkhir}).");
             set_flash('success', 'Kuis berhasil diselesaikan dan jawaban telah tersimpan.');
@@ -505,6 +515,12 @@ require_once __DIR__ . '/../includes/navbar.php';
                 }
             }, 1000);
         }
+
+        // Keep-Alive Heartbeat: Memastikan sesi pengerjaan kuis mahasiswa tetap aktif dan tidak logout
+        setInterval(function() {
+            fetch('/heartbeat.php', { credentials: 'same-origin' })
+                .catch(function(e) { /* silent ignore network drop */ });
+        }, 120000);
 
         function markAnswered(idSoal, val = 'filled') {
             const btn = document.getElementById('nav-btn-' + idSoal);

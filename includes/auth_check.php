@@ -7,10 +7,26 @@
 declare(strict_types=1);
 
 if (session_status() === PHP_SESSION_NONE) {
+    // Arahkan session save path ke direktori internal LMS
+    // Hal ini mencegah cron OS (/usr/lib/php/sessionclean di Ubuntu) menghapus sesi sebelum waktunya (default 24 menit)
+    $sessionSaveDir = dirname(__DIR__) . '/storage/sessions';
+    if (!is_dir($sessionSaveDir)) {
+        @mkdir($sessionSaveDir, 0700, true);
+    }
+    if (is_dir($sessionSaveDir) && is_writable($sessionSaveDir)) {
+        session_save_path($sessionSaveDir);
+    }
+
+    // Set Garbage Collection Max Lifetime ke 30 hari (2.592.000 detik)
+    ini_set('session.gc_maxlifetime', (string)(30 * 86400));
+
     // Pengaturan cookie sesi yang aman
     $cookieParams = session_get_cookie_params();
+    $hasRememberCookie = !empty($_COOKIE['lms_remember']);
+    $sessionCookieLifetime = $hasRememberCookie ? (30 * 86400) : (int)($cookieParams['lifetime'] ?? 0);
+
     session_set_cookie_params([
-        'lifetime' => $cookieParams['lifetime'],
+        'lifetime' => $sessionCookieLifetime,
         'path'     => '/',
         'domain'   => $cookieParams['domain'],
         'secure'   => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
@@ -25,18 +41,68 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
+// Auto-Restore Sesi jika sesi PHP hilang/expired tetapi cookie "Ingat Saya" (lms_remember) ada
+if (empty($_SESSION['user_id']) && !empty($_COOKIE['lms_remember'])) {
+    $rememberParts = explode(':', (string)$_COOKIE['lms_remember'], 2);
+    if (count($rememberParts) === 2) {
+        [$cookieUid, $cookiePlainToken] = $rememberParts;
+        if (!empty($cookieUid) && !empty($cookiePlainToken)) {
+            try {
+                if (!function_exists('get_db')) {
+                    require_once __DIR__ . '/../config/database.php';
+                }
+                $dbRem = get_db();
+                $tokenHash = hash('sha256', $cookiePlainToken);
+                $stmtRem = $dbRem->prepare("
+                    SELECT id_user, username, nama, role, angkatan, foto_profil, remember_expires
+                    FROM users
+                    WHERE id_user = ? AND remember_token = ? AND remember_expires > CURRENT_TIMESTAMP
+                ");
+                $stmtRem->execute([$cookieUid, $tokenHash]);
+                $userRem = $stmtRem->fetch();
+
+                if ($userRem) {
+                    $rawRole = $userRem['role'];
+                    if (strcasecmp($rawRole, 'admin') === 0 || strcasecmp($rawRole, 'dosen admin') === 0) {
+                        $normalizedRole = 'Dosen Admin';
+                    } elseif (strcasecmp($rawRole, 'dosen') === 0) {
+                        $normalizedRole = 'Dosen';
+                    } else {
+                        $normalizedRole = 'Mahasiswa';
+                    }
+
+                    $_SESSION['user_id']        = $userRem['id_user'];
+                    $_SESSION['username']       = $userRem['username'];
+                    $_SESSION['nama']           = $userRem['nama'];
+                    $_SESSION['role']           = $normalizedRole;
+                    $_SESSION['angkatan']       = $userRem['angkatan'];
+                    $_SESSION['foto_profil']    = $userRem['foto_profil'] ?? null;
+                    $_SESSION['remember_me']    = true;
+                    $_SESSION['last_activity']  = time();
+                } else {
+                    // Token tidak cocok atau sudah kadaluwarsa, hapus cookie lama
+                    setcookie('lms_remember', '', time() - 42000, '/', '', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on', true);
+                }
+            } catch (Throwable $e) {
+                // Abaikan jika DB belum siap
+            }
+        }
+    }
+}
+
 // Pengecekan Masa Kedaluwarsa Sesi (Idle Session Timeout)
-// Jika pengguna TIDAK mencentang "Ingat Saya", sesi dibatasi 30 menit tanpa aktivitas
+// Jika pengguna TIDAK mencentang "Ingat Saya" dan TIDAK sedang dalam sesi kuis aktif,
+// sesi diberi toleransi idle hingga 4 jam (14400 detik) untuk keamanan akademik tanpa memutus pengerjaan kuis.
 if (!empty($_SESSION['user_id'])) {
-    if (empty($_SESSION['remember_me'])) {
-        $maxIdleSeconds = 1800; // 30 Menit
+    if (empty($_SESSION['remember_me']) && empty($_SESSION['active_quiz_id'])) {
+        $maxIdleSeconds = 14400; // 4 Jam toleransi idle
         if (isset($_SESSION['last_activity']) && (time() - (int)$_SESSION['last_activity'] > $maxIdleSeconds)) {
             session_unset();
             session_destroy();
             if (session_status() === PHP_SESSION_NONE) {
                 session_start();
             }
-            set_flash('warning', 'Sesi Anda telah kedaluwarsa karena tidak ada aktivitas selama 30 menit. Silakan masuk kembali.');
+            set_flash('warning', 'Sesi Anda telah kedaluwarsa karena tidak ada aktivitas selama 4 jam. Silakan masuk kembali.');
             header('Location: /login');
             exit;
         }

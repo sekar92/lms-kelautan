@@ -505,6 +505,30 @@ assert_test("v3.6.3: Kuis tautan eksternal TIDAK masuk ke dalam daftar Rekap Nil
     !in_array($idKuisEksternal, $taskIdsInRekap, true)
 );
 
+// =========================================================
+// PENGUJIAN PERSISTENSI SESI & REMEMBER-ME (v3.6.4)
+// =========================================================
+$userCols = $db->query("PRAGMA table_info(users)")->fetchAll(PDO::FETCH_COLUMN, 1);
+assert_test("v3.6.4: Kolom users.remember_token tersedia", in_array('remember_token', $userCols, true));
+assert_test("v3.6.4: Kolom users.remember_expires tersedia", in_array('remember_expires', $userCols, true));
+
+$sessionSaveDir = dirname(__DIR__) . '/storage/sessions';
+assert_test("v3.6.4: Direktori storage/sessions ada dan writable", is_dir($sessionSaveDir) && is_writable($sessionSaveDir));
+
+// Uji penyimpanan dan verifikasi persistent token
+$plainTokenTest = bin2hex(random_bytes(32));
+$tokenHashTest = hash('sha256', $plainTokenTest);
+$expiresTest = date('Y-m-d H:i:s', time() + (30 * 86400));
+$db->prepare("UPDATE users SET remember_token = ?, remember_expires = ? WHERE id_user = 'USR-00001'")
+   ->execute([$tokenHashTest, $expiresTest]);
+
+$checkTok = $db->query("SELECT remember_token, remember_expires FROM users WHERE id_user = 'USR-00001'")->fetch(PDO::FETCH_ASSOC);
+assert_test("v3.6.4: Token persisten berhasil disimpan di tabel users",
+    !empty($checkTok['remember_token']) && $checkTok['remember_token'] === $tokenHashTest
+);
+
+assert_test("v3.6.4: Berkas public_html/heartbeat.php tersedia", file_exists(dirname(__DIR__) . '/public_html/heartbeat.php'));
+
 // Kembalikan session ke admin
 unset($_SESSION['impersonator']);
 $_SESSION['user_id'] = 'USR-00001';

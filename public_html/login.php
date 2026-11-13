@@ -62,10 +62,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['last_activity'] = time();
                 unset($_SESSION['impersonator']);
 
-                // Konfigurasi Cookie Sesi sesuai pilihan "Ingat Saya"
+                // Konfigurasi Token Persisten & Cookie Sesi sesuai pilihan "Ingat Saya"
+                $cookieParams = session_get_cookie_params();
+                $isSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
+
                 if ($rememberMe) {
                     $lifetime = 30 * 86400; // 30 Hari
-                    $cookieParams = session_get_cookie_params();
+                    $plainToken = bin2hex(random_bytes(32));
+                    $tokenHash = hash('sha256', $plainToken);
+                    $expiresAt = date('Y-m-d H:i:s', time() + $lifetime);
+
+                    // Simpan token persisten ke tabel users
+                    try {
+                        $stmtTok = $db->prepare("UPDATE users SET remember_token = ?, remember_expires = ? WHERE id_user = ?");
+                        $stmtTok->execute([$tokenHash, $expiresAt, $user['id_user']]);
+                    } catch (Throwable $e) {
+                        // Jika kolom belum tersedia sebelum migrasi otomatis
+                    }
+
+                    // Set cookie persisten lms_remember (HttpOnly, SameSite=Lax)
+                    setcookie(
+                        'lms_remember',
+                        $user['id_user'] . ':' . $plainToken,
+                        [
+                            'expires'  => time() + $lifetime,
+                            'path'     => '/',
+                            'domain'   => $cookieParams['domain'],
+                            'secure'   => $isSecure,
+                            'httponly' => true,
+                            'samesite' => 'Lax'
+                        ]
+                    );
+
+                    // Perpanjang masa berlaku cookie sesi ke 30 hari
                     setcookie(
                         session_name(),
                         session_id(),
@@ -73,11 +102,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'expires'  => time() + $lifetime,
                             'path'     => '/',
                             'domain'   => $cookieParams['domain'],
-                            'secure'   => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
+                            'secure'   => $isSecure,
                             'httponly' => true,
                             'samesite' => 'Lax'
                         ]
                     );
+                } else {
+                    // Bersihkan token lama jika tidak dicentang
+                    try {
+                        $stmtTok = $db->prepare("UPDATE users SET remember_token = NULL, remember_expires = NULL WHERE id_user = ?");
+                        $stmtTok->execute([$user['id_user']]);
+                    } catch (Throwable $e) {}
+
+                    setcookie('lms_remember', '', time() - 42000, '/', '', $isSecure, true);
                 }
 
                 // Catat log aktivitas masuk berhasil

@@ -104,6 +104,12 @@ function ensure_schema_up_to_date(PDO $pdo): void {
             if (!empty($userCols) && !in_array('foto_profil', $userCols, true)) {
                 $pdo->exec("ALTER TABLE users ADD COLUMN foto_profil TEXT DEFAULT NULL");
             }
+            if (!empty($userCols) && !in_array('remember_token', $userCols, true)) {
+                $pdo->exec("ALTER TABLE users ADD COLUMN remember_token TEXT DEFAULT NULL");
+            }
+            if (!empty($userCols) && !in_array('remember_expires', $userCols, true)) {
+                $pdo->exec("ALTER TABLE users ADD COLUMN remember_expires DATETIME DEFAULT NULL");
+            }
 
             // Cek id_dosen di tabel mata_kuliah
             $mkCols = $pdo->query("PRAGMA table_info(mata_kuliah)")->fetchAll(PDO::FETCH_COLUMN, 1);
@@ -251,6 +257,10 @@ function ensure_schema_up_to_date(PDO $pdo): void {
             $colUser = $pdo->query("SHOW COLUMNS FROM users LIKE 'foto_profil'")->fetch();
             if (!$colUser) {
                 $pdo->exec("ALTER TABLE users ADD COLUMN foto_profil VARCHAR(255) DEFAULT NULL AFTER angkatan");
+            }
+            $colRem = $pdo->query("SHOW COLUMNS FROM users LIKE 'remember_token'")->fetch();
+            if (!$colRem) {
+                $pdo->exec("ALTER TABLE users ADD COLUMN remember_token VARCHAR(64) DEFAULT NULL AFTER foto_profil, ADD COLUMN remember_expires DATETIME DEFAULT NULL AFTER remember_token, ADD INDEX idx_users_rem_token (remember_token)");
             }
 
             // Ubah tipe kolom role agar fleksibel mendukung 'Dosen Admin', 'Dosen', 'Mahasiswa'

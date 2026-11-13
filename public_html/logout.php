@@ -9,11 +9,24 @@ declare(strict_types=1);
 define('NO_AUTH_REQUIRED', true);
 require_once __DIR__ . '/../includes/auth_check.php';
 
-// Catat aktivitas logout jika masih login
+// Catat aktivitas logout jika masih login & bersihkan token persisten
 if (is_logged_in()) {
     $u = current_user();
     log_activity('LOGOUT', "Pengguna '{$u['nama']}' ({$u['role']}) keluar dari sistem.");
+
+    try {
+        if (!function_exists('get_db')) {
+            require_once __DIR__ . '/../config/database.php';
+        }
+        $db = get_db();
+        $stmtClear = $db->prepare("UPDATE users SET remember_token = NULL, remember_expires = NULL WHERE id_user = ?");
+        $stmtClear->execute([$u['id_user']]);
+    } catch (Throwable $e) {}
 }
+
+// Hapus cookie persisten lms_remember
+$isSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
+setcookie('lms_remember', '', time() - 42000, '/', '', $isSecure, true);
 
 // Hapus seluruh variabel sesi
 $_SESSION = [];
